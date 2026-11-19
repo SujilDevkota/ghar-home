@@ -1,0 +1,12 @@
+# Build output
+out/
+*.apk
+*.idsig
+
+# Your signing key: never publish it. Updates must be signed with the same key.
+*.keystore
+
+# Local scratch
+share/
+preview.png
+.DS_Store

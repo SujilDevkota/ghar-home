@@ -1,0 +1,58 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<title>Ghar Home remote</title>
+<style>
+body{margin:0;background:#0b1220;color:#fff;font-family:sans-serif;-webkit-tap-highlight-color:transparent}
+.wrap{max-width:420px;margin:0 auto;padding:16px}
+h1{font-size:18px;font-weight:400;margin:4px 0 12px}
+#msg{min-height:20px;color:#9fd;font-size:14px;margin:8px 0}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0 14px}
+button{background:#1c2742;color:#fff;border:0;border-radius:14px;font-size:20px;padding:20px 0;touch-action:manipulation}
+button:active{background:#2f6bff}
+.ok{background:#2f6bff}
+.row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
+.row button{font-size:15px;padding:14px 0}
+form{display:flex;gap:8px;margin-bottom:6px}
+input{flex:1;min-width:0;font-size:17px;padding:12px;border-radius:12px;border:0;background:#16203a;color:#fff}
+form button{padding:0 18px;font-size:16px}
+small{color:#89a;display:block;margin-bottom:14px;line-height:1.4}
+#apps button{display:block;width:100%;text-align:left;padding:13px 16px;font-size:16px;margin-bottom:8px}
+</style></head><body><div class="wrap">
+<h1>Ghar Home remote</h1>
+<div class="pad">
+<span></span><button onclick="key('up')">&#9650;</button><span></span>
+<button onclick="key('left')">&#9664;</button><button class="ok" onclick="key('ok')">OK</button><button onclick="key('right')">&#9654;</button>
+<span></span><button onclick="key('down')">&#9660;</button><span></span>
+</div>
+<div class="row"><button onclick="key('back')">Back</button><button onclick="key('home')">Home</button><button onclick="key('menu')">Menu</button></div>
+<form onsubmit="say();return false"><input id="q" placeholder="Open an app, e.g. SmartTube" autocomplete="off"><button class="ok">Go</button></form>
+<small>Tip: use the microphone or handwriting mode on your phone's keyboard to speak or draw the name.</small>
+<div id="msg"></div>
+<form onsubmit="city();return false"><input id="c" placeholder="Weather city, e.g. Pokhara" autocomplete="off"><button>Set</button></form>
+<div id="apps"></div>
+</div><script>
+var pin='';try{pin=localStorage.getItem('pin')||''}catch(e){}
+var m=/[?&]pin=(\d+)/.exec(location.search);
+if(m){pin=m[1];try{localStorage.setItem('pin',pin);history.replaceState(null,'','/')}catch(e){}}
+function msg(t){document.getElementById('msg').textContent=t||''}
+function api(path,done){
+  if(!pin){pin=prompt('Enter the PIN shown on the TV')||'';try{localStorage.setItem('pin',pin)}catch(e){}}
+  var x=new XMLHttpRequest();
+  x.open('GET','/api/'+path+(path.indexOf('?')<0?'?':'&')+'pin='+encodeURIComponent(pin));
+  x.onload=function(){
+    if(x.status==403){pin='';try{localStorage.removeItem('pin')}catch(e){}msg('Wrong PIN. Tap again to retry.');return}
+    var r={};try{r=JSON.parse(x.responseText)}catch(e){}
+    if(r.msg!==undefined)msg(r.msg);if(done)done(r)};
+  x.onerror=function(){msg('TV not reachable')};
+  x.send();
+}
+function key(k){api('key?k='+k)}
+function say(){var q=document.getElementById('q');api('say?q='+encodeURIComponent(q.value));q.value=''}
+function city(){var c=document.getElementById('c');api('city?q='+encodeURIComponent(c.value));c.value=''}
+function openApp(p){api('open?pkg='+encodeURIComponent(p))}
+api('info',function(r){
+  var box=document.getElementById('apps');
+  (r.apps||[]).forEach(function(a){var b=document.createElement('button');b.textContent=a.label;b.onclick=function(){openApp(a.pkg)};box.appendChild(b)});
+});
+</script></body></html>
