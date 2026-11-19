@@ -1,58 +1,99 @@
 <!doctype html>
 <html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
+<meta name="theme-color" content="#0b1220">
 <title>Ghar Home remote</title>
 <style>
-body{margin:0;background:#0b1220;color:#fff;font-family:sans-serif;-webkit-tap-highlight-color:transparent}
-.wrap{max-width:420px;margin:0 auto;padding:16px}
-h1{font-size:18px;font-weight:400;margin:4px 0 12px}
-#msg{min-height:20px;color:#9fd;font-size:14px;margin:8px 0}
-.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:8px 0 14px}
-button{background:#1c2742;color:#fff;border:0;border-radius:14px;font-size:20px;padding:20px 0;touch-action:manipulation}
-button:active{background:#2f6bff}
-.ok{background:#2f6bff}
-.row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px}
-.row button{font-size:15px;padding:14px 0}
-form{display:flex;gap:8px;margin-bottom:6px}
-input{flex:1;min-width:0;font-size:17px;padding:12px;border-radius:12px;border:0;background:#16203a;color:#fff}
-form button{padding:0 18px;font-size:16px}
-small{color:#89a;display:block;margin-bottom:14px;line-height:1.4}
-#apps button{display:block;width:100%;text-align:left;padding:13px 16px;font-size:16px;margin-bottom:8px}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(160deg,#0b1220,#111b33 55%,#0e2a3a);background-attachment:fixed;color:#fff;
+ font-family:-apple-system,Roboto,"Segoe UI",sans-serif;-webkit-tap-highlight-color:transparent;min-height:100vh}
+.wrap{max-width:440px;margin:0 auto;padding:18px 16px 40px}
+header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+h1{font-size:20px;font-weight:300;margin:0;letter-spacing:.3px}
+.dot{width:9px;height:9px;border-radius:50%;background:#555;transition:background .3s}
+.dot.on{background:#3ddc97;box-shadow:0 0 10px #3ddc97}
+#msg{height:22px;color:#9fe;font-size:14px;text-align:center;margin:4px 0 6px;opacity:.9}
+button{font:inherit;color:#fff;border:0;cursor:pointer;touch-action:manipulation}
+.pad{position:relative;width:260px;height:260px;margin:6px auto 18px;border-radius:50%;
+ background:radial-gradient(circle at 30% 25%,#27355c,#141d36);box-shadow:0 12px 30px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08)}
+.pad button{position:absolute;background:transparent;font-size:26px;width:84px;height:84px;border-radius:50%;opacity:.85}
+.pad button:active{background:rgba(47,107,255,.35)}
+.up{top:4px;left:88px}.down{bottom:4px;left:88px}.left{left:4px;top:88px}.right{right:4px;top:88px}
+.pad .ok{top:83px;left:83px;width:94px;height:94px;background:linear-gradient(145deg,#3b78ff,#2456d6);font-size:20px;font-weight:600;
+ opacity:1;box-shadow:0 6px 16px rgba(47,107,255,.45)}
+.pad .ok:active{background:#1d47b8}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px}
+.keys button,.chip,.sw{background:rgba(255,255,255,.08);border-radius:14px;padding:14px 0;font-size:15px}
+.keys button:active,.chip:active,.sw:active{background:#2f6bff}
+h2{font-size:13px;font-weight:600;text-transform:uppercase;letter-spacing:1.2px;color:#8fa3c8;margin:22px 0 10px}
+form{display:flex;gap:8px}
+input[type=text]{flex:1;min-width:0;font:inherit;font-size:16px;padding:13px 14px;border-radius:14px;border:1px solid rgba(255,255,255,.1);
+ background:rgba(0,0,0,.25);color:#fff;outline:none}
+input[type=text]:focus{border-color:#2f6bff}
+form button{background:#2f6bff;border-radius:14px;padding:0 18px;font-size:15px;font-weight:600}
+small{color:#8fa3c8;display:block;margin-top:8px;line-height:1.45;font-size:13px}
+#apps{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.chip{padding:13px 12px;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#themes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+.sw{padding:12px;text-align:left;border:2px solid transparent}
+.sw.sel{border-color:#fff}
+.photo{display:block;margin-top:8px;text-align:center;background:rgba(255,255,255,.08);border-radius:14px;padding:14px;font-size:15px}
+.photo input{display:none}
 </style></head><body><div class="wrap">
-<h1>Ghar Home remote</h1>
-<div class="pad">
-<span></span><button onclick="key('up')">&#9650;</button><span></span>
-<button onclick="key('left')">&#9664;</button><button class="ok" onclick="key('ok')">OK</button><button onclick="key('right')">&#9654;</button>
-<span></span><button onclick="key('down')">&#9660;</button><span></span>
-</div>
-<div class="row"><button onclick="key('back')">Back</button><button onclick="key('home')">Home</button><button onclick="key('menu')">Menu</button></div>
-<form onsubmit="say();return false"><input id="q" placeholder="Open an app, e.g. SmartTube" autocomplete="off"><button class="ok">Go</button></form>
-<small>Tip: use the microphone or handwriting mode on your phone's keyboard to speak or draw the name.</small>
+<header><h1>Ghar Home</h1><span class="dot" id="dot"></span></header>
 <div id="msg"></div>
-<form onsubmit="city();return false"><input id="c" placeholder="Weather city, e.g. Pokhara" autocomplete="off"><button>Set</button></form>
+<div class="pad">
+<button class="up" onclick="key('up')">&#9650;</button>
+<button class="left" onclick="key('left')">&#9664;</button>
+<button class="ok" onclick="key('ok')">OK</button>
+<button class="right" onclick="key('right')">&#9654;</button>
+<button class="down" onclick="key('down')">&#9660;</button>
+</div>
+<div class="keys"><button onclick="key('back')">Back</button><button onclick="key('home')">Home</button><button onclick="key('menu')">Menu</button></div>
+
+<h2>Open an app</h2>
+<form onsubmit="say();return false"><input type="text" id="q" placeholder="Say or type a name" autocomplete="off"><button>Go</button></form>
+<small>Use the microphone or handwriting mode of your keyboard to speak or draw the name.</small>
+<h2>Apps on the TV</h2>
 <div id="apps"></div>
+
+<h2>Wallpaper</h2>
+<div id="themes"></div>
+<label class="photo">Use a photo from this phone<input type="file" accept="image/*" onchange="photo(this)"></label>
+
+<h2>Weather city</h2>
+<form onsubmit="city();return false"><input type="text" id="c" placeholder="e.g. Pokhara" autocomplete="off"><button>Set</button></form>
+<small id="cityNow"></small>
 </div><script>
+var COLORS=['#111b33','#3a2352','#0f2e24','#4a1d2c','#07304a','#4d0f2e','#141418'];
 var pin='';try{pin=localStorage.getItem('pin')||''}catch(e){}
 var m=/[?&]pin=(\d+)/.exec(location.search);
 if(m){pin=m[1];try{localStorage.setItem('pin',pin);history.replaceState(null,'','/')}catch(e){}}
 function msg(t){document.getElementById('msg').textContent=t||''}
-function api(path,done){
-  if(!pin){pin=prompt('Enter the PIN shown on the TV')||'';try{localStorage.setItem('pin',pin)}catch(e){}}
-  var x=new XMLHttpRequest();
-  x.open('GET','/api/'+path+(path.indexOf('?')<0?'?':'&')+'pin='+encodeURIComponent(pin));
-  x.onload=function(){
-    if(x.status==403){pin='';try{localStorage.removeItem('pin')}catch(e){}msg('Wrong PIN. Tap again to retry.');return}
-    var r={};try{r=JSON.parse(x.responseText)}catch(e){}
-    if(r.msg!==undefined)msg(r.msg);if(done)done(r)};
-  x.onerror=function(){msg('TV not reachable')};
-  x.send();
-}
-function key(k){api('key?k='+k)}
+function online(on){document.getElementById('dot').className='dot'+(on?' on':'')}
+function url(path){return '/api/'+path+(path.indexOf('?')<0?'?':'&')+'pin='+encodeURIComponent(pin)}
+function askPin(){if(!pin){pin=prompt('Enter the PIN shown on the TV')||'';try{localStorage.setItem('pin',pin)}catch(e){}}}
+function done(x,cb){
+  if(x.status==403){pin='';try{localStorage.removeItem('pin')}catch(e){}msg('Wrong PIN. Tap again to retry.');return}
+  online(true);var r={};try{r=JSON.parse(x.responseText)}catch(e){}
+  if(r.msg!==undefined)msg(r.msg);if(cb)cb(r)}
+function api(path,cb){askPin();var x=new XMLHttpRequest();x.open('GET',url(path));
+  x.onload=function(){done(x,cb)};x.onerror=function(){online(false);msg('TV not reachable')};x.send()}
+function key(k){if(navigator.vibrate)navigator.vibrate(12);api('key?k='+k)}
 function say(){var q=document.getElementById('q');api('say?q='+encodeURIComponent(q.value));q.value=''}
-function city(){var c=document.getElementById('c');api('city?q='+encodeURIComponent(c.value));c.value=''}
-function openApp(p){api('open?pkg='+encodeURIComponent(p))}
-api('info',function(r){
-  var box=document.getElementById('apps');
-  (r.apps||[]).forEach(function(a){var b=document.createElement('button');b.textContent=a.label;b.onclick=function(){openApp(a.pkg)};box.appendChild(b)});
-});
+function city(){var c=document.getElementById('c');api('city?q='+encodeURIComponent(c.value),load);c.value=''}
+function theme(i){api('theme?i='+i,load)}
+function photo(el){var f=el.files[0];if(!f)return;askPin();msg('Sending photo…');
+  var x=new XMLHttpRequest();x.open('POST',url('wallpaper'));
+  x.onload=function(){done(x,load)};x.onerror=function(){msg('Upload failed')};x.send(f);el.value=''}
+function load(){api('info',function(r){
+  var box=document.getElementById('apps');box.innerHTML='';
+  (r.apps||[]).forEach(function(a){var b=document.createElement('button');b.className='chip';b.textContent=a.label;
+    b.onclick=function(){api('open?pkg='+encodeURIComponent(a.pkg))};box.appendChild(b)});
+  var t=document.getElementById('themes');t.innerHTML='';
+  (r.themes||[]).forEach(function(n,i){var b=document.createElement('button');b.className='sw'+(r.theme===i?' sel':'');
+    b.style.background=COLORS[i]||'#222';b.textContent=n;b.onclick=function(){theme(i)};t.appendChild(b)});
+  document.getElementById('cityNow').textContent=r.city?'Now: '+r.city:'';
+  msg('')})}
+load();
 </script></body></html>

@@ -9,7 +9,7 @@ rm -rf out && mkdir -p out/res out/classes out/dex
 "$BT/aapt2" compile --dir res -o out/res
 "$BT/aapt2" link -o out/base.apk -I "$JAR" --manifest AndroidManifest.xml \
   --min-sdk-version 19 --target-sdk-version 23 -A assets out/res/*.flat
-javac -nowarn -Xlint:-options -source 8 -target 8 -bootclasspath "$JAR" \
+javac -encoding UTF-8 -nowarn -Xlint:-options -source 8 -target 8 -bootclasspath "$JAR" \
   -d out/classes $(find src -name '*.java')
 "$SDK/build-tools/36.0.0/d8" --release --min-api 19 --lib "$JAR" --output out/dex $(find out/classes -name '*.class')
 cp out/base.apk out/unsigned.apk

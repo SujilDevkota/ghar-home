@@ -9,6 +9,8 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ResolveInfo;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.IBinder;
 import android.provider.Settings;
@@ -45,7 +47,7 @@ import java.util.Locale;
 public class LinkService extends Service {
 
     static final int PORT = 8765;
-    private static final long MAX_APK = 300L * 1024 * 1024;
+    private static final long MAX_APK = 300L * 1024 * 1024, MAX_PHOTO = 25L * 1024 * 1024;
 
     private ServerSocket server;
     private volatile boolean running;
@@ -162,7 +164,12 @@ public class LinkService extends Service {
         }
 
         if (path.equals("/api/info")) {
-            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"apps\":[");
+            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"themes\":[");
+            for (int i = 0; i < HomeActivity.THEME_NAMES.length; i++) {
+                b.append(i > 0 ? "," : "").append('"').append(esc(HomeActivity.THEME_NAMES[i])).append('"');
+            }
+            b.append("],\"theme\":").append(getSharedPreferences("ghar", MODE_PRIVATE).getInt(HomeActivity.KEY_THEME, 0))
+                    .append(",\"city\":\"").append(esc(Weather.city(getSharedPreferences("ghar", MODE_PRIVATE)))).append("\",\"apps\":[");
             List<String[]> apps = apps();
             for (int i = 0; i < apps.size(); i++) {
                 if (i > 0) b.append(',');
@@ -184,6 +191,26 @@ public class LinkService extends Service {
                 home.runOnUiThread(new Runnable() { @Override public void run() { home.refreshWeather(true); } });
             }
             json(out, 200, found == null ? "City not found" : "Weather set to " + found);
+        } else if (path.equals("/api/theme")) {
+            int i = -9;
+            try { i = Integer.parseInt(query.get("i")); } catch (Exception ignored) { }
+            if (i < -1 || i >= HomeActivity.THEME_NAMES.length || (i == -1 && !HomeActivity.photoFile(this).exists())) {
+                json(out, 200, "No such wallpaper");
+            } else {
+                getSharedPreferences("ghar", MODE_PRIVATE).edit().putInt(HomeActivity.KEY_THEME, i).commit();
+                refreshBackground();
+                json(out, 200, i == -1 ? "Your photo" : HomeActivity.THEME_NAMES[i]);
+            }
+        } else if (path.equals("/api/wallpaper") && method.equals("POST")) {
+            if (length <= 0 || length > MAX_PHOTO) {
+                json(out, 400, "Send a photo up to 25 MB");
+                return;
+            }
+            if (expect) {
+                out.write("HTTP/1.1 100 Continue\r\n\r\n".getBytes("US-ASCII"));
+                out.flush();
+            }
+            json(out, 200, wallpaper(in, length));
         } else if (path.equals("/api/install") && method.equals("POST")) {
             if (length <= 0 || length > MAX_APK) {
                 json(out, 400, "Send the APK as the request body");
@@ -342,25 +369,70 @@ public class LinkService extends Service {
         return best == null ? "No app called \"" + text.trim() + "\"" : open(best[0]);
     }
 
+    private void refreshBackground() {
+        final HomeActivity home = HomeActivity.showing;
+        if (home != null) home.runOnUiThread(new Runnable() { @Override public void run() { home.applyBackground(); } });
+    }
+
+    private static void save(InputStream in, long length, File to) throws IOException {
+        FileOutputStream f = new FileOutputStream(to);
+        try {
+            byte[] buf = new byte[65536];
+            long left = length;
+            while (left > 0) {
+                int n = in.read(buf, 0, (int) Math.min(buf.length, left));
+                if (n < 0) throw new IOException("The upload stopped early");
+                f.write(buf, 0, n);
+                left -= n;
+            }
+        } finally {
+            f.close();
+        }
+    }
+
+    /** A photo from the phone becomes the wallpaper: cut to the screen's shape and saved at the screen's size. */
+    private String wallpaper(InputStream in, long length) {
+        File raw = new File(getCacheDir(), "photo.upload");
+        try {
+            save(in, length, raw);
+            android.util.DisplayMetrics dm = getResources().getDisplayMetrics();
+            int sw = Math.max(dm.widthPixels, dm.heightPixels), sh = Math.min(dm.widthPixels, dm.heightPixels);
+            BitmapFactory.Options o = new BitmapFactory.Options();
+            o.inJustDecodeBounds = true;
+            BitmapFactory.decodeFile(raw.getPath(), o);
+            if (o.outWidth <= 0 || o.outHeight <= 0) return "That file is not a photo";
+            int sample = 1;
+            while (o.outWidth / (sample * 2) >= sw && o.outHeight / (sample * 2) >= sh) sample *= 2;
+            o = new BitmapFactory.Options();
+            o.inSampleSize = sample;
+            Bitmap b = BitmapFactory.decodeFile(raw.getPath(), o);
+            if (b == null) return "That file is not a photo";
+            // Center crop to the screen's shape.
+            float scale = Math.max(sw / (float) b.getWidth(), sh / (float) b.getHeight());
+            int cw = Math.min(b.getWidth(), Math.round(sw / scale)), ch = Math.min(b.getHeight(), Math.round(sh / scale));
+            Bitmap cropped = Bitmap.createBitmap(b, (b.getWidth() - cw) / 2, (b.getHeight() - ch) / 2, cw, ch);
+            Bitmap sized = Bitmap.createScaledBitmap(cropped, sw, sh, true);
+            File tmp = new File(getFilesDir(), "wallpaper.tmp");
+            FileOutputStream f = new FileOutputStream(tmp);
+            try { sized.compress(Bitmap.CompressFormat.JPEG, 88, f); } finally { f.close(); }
+            if (!tmp.renameTo(HomeActivity.photoFile(this))) return "The photo could not be saved";
+            getSharedPreferences("ghar", MODE_PRIVATE).edit().putInt(HomeActivity.KEY_THEME, -1).commit();
+            refreshBackground();
+            return "Your photo is the wallpaper";
+        } catch (Throwable t) {
+            return "The photo could not be used";
+        } finally {
+            raw.delete();
+        }
+    }
+
     /** Saves the APK where the TV's installer can read it, and opens the installer on the TV. */
     private String install(InputStream in, long length) {
         try {
             File dir = getExternalCacheDir();
             if (dir == null || (!dir.isDirectory() && !dir.mkdirs())) dir = getCacheDir();
             File apk = new File(dir, "received.apk");
-            FileOutputStream f = new FileOutputStream(apk);
-            try {
-                byte[] buf = new byte[65536];
-                long left = length;
-                while (left > 0) {
-                    int n = in.read(buf, 0, (int) Math.min(buf.length, left));
-                    if (n < 0) throw new IOException("The upload stopped early");
-                    f.write(buf, 0, n);
-                    left -= n;
-                }
-            } finally {
-                f.close();
-            }
+            save(in, length, apk);
             apk.setReadable(true, false);
             if (getPackageManager().getPackageArchiveInfo(apk.getPath(), 0) == null) {
                 apk.delete();

@@ -11,17 +11,25 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
 ## What it does
 
 - **Clock and dates.** The time, the English date and the Bikram Sambat date, with the next Nepali festival.
-- **Weather.** Temperature and conditions for a city you choose (Kathmandu to start with). A soft sun, moon, cloud, rain or snow is drawn behind it.
+- **Patro.** A Nepali calendar, one month at a time, with English dates, Saturdays and festivals marked.
+  Open it from the date under the clock or from *Patro* in the footer.
+- **Weather.** Temperature and conditions for a city you choose (Kathmandu to start with), with a soft sun,
+  moon, cloud, rain or snow drawn behind it.
 - **Favourites.** A row of large tiles for the apps you pick, in your order.
 - **All apps, most used first.** Apps you open often rise to the top.
-- **A quiet tick when you move**, which *Sound* in the footer turns off.
-- **Hide apps.** Hold OK on an app to hide system clutter. *Hidden apps* in the footer brings one back.
-- **Phone remote.** *Phone remote* in the footer shows a QR code. Scan it and your phone becomes a remote:
-  arrow keys, OK, Back, Home, the list of apps, and a box to open an app by name. Use the microphone or
-  handwriting mode of your phone's keyboard to speak or draw the name. Nothing is installed on the phone.
+- **Wallpapers.** Seven hand-picked backgrounds, or a photo sent from your phone.
+- **English and Nepali.** Switch in the footer. Nepali is offered only on TVs that have a Devanagari font.
+- **Hide apps.** Hold OK on an app to hide it. System clutter is hidden on the first start; *Hidden* in the
+  footer brings anything back.
+- **Phone remote.** *Remote* in the footer shows a QR code. Scan it and your phone becomes a remote: arrow
+  keys, OK, Back, Home, the list of apps, wallpapers, the weather city, and a box to open an app by name.
+  Use the microphone or handwriting mode of your phone's keyboard to speak or draw the name. Nothing is
+  installed on the phone.
 - **Install apps over Wi-Fi.** Send an APK from a computer and the TV's installer opens.
-- **A way back.** *Original home* opens the TV's own home screen. If Ghar Home ever crashes, it hands the
-  screen back to the original one by itself.
+- **Small sounds.** A chime when the home screen has loaded and a quiet tick when you move; *Sound* in the
+  footer turns them off.
+- **A way back.** *TV home* opens the TV's own home screen. If Ghar Home ever crashes, it hands the screen
+  back to the original one by itself.
 
 ## What you need
 
@@ -61,12 +69,12 @@ Google's old YouTube app, once; *Hidden apps* brings it back.
 
 ### Weather city
 
-Open the phone remote and type a city in the *Weather city* box. The TV has no GPS, so it cannot find its own
+Open the phone remote and type a city under *Weather city*. The TV has no GPS, so it cannot find its own
 location.
 
 ### Send an app from a computer
 
-Open *Phone remote* on the TV to see its address and PIN, then:
+Open *Remote* on the TV to see its address and PIN, then:
 
 ```bash
 curl -X POST --data-binary @SomeApp.apk "http://TV_ADDRESS:8765/api/install?pin=PIN"
@@ -94,6 +102,9 @@ update each other.
 | [`HomeActivity.java`](src/np/ghar/home/HomeActivity.java) | The home screen, drawn with plain Views built in code |
 | [`LinkService.java`](src/np/ghar/home/LinkService.java) | The small web server on the TV: phone remote and install over Wi-Fi |
 | [`NepaliDate.java`](src/np/ghar/home/NepaliDate.java) | Bikram Sambat dates and the festival list |
+| [`PatroView.java`](src/np/ghar/home/PatroView.java) | The patro (month view) |
+| [`T.java`](src/np/ghar/home/T.java) | The Nepali text |
+| [`WeatherArt.java`](src/np/ghar/home/WeatherArt.java) | The weather picture behind the header |
 | [`Weather.java`](src/np/ghar/home/Weather.java) | Weather and city lookup from Open-Meteo |
 | [`Qr.java`](src/np/ghar/home/Qr.java) | The QR code encoder |
 | [`assets/remote.html`](assets/remote.html) | The phone remote page |
@@ -128,7 +139,7 @@ are welcome.
 - The phone remote controls Ghar Home and opens apps. Android does not let one app press keys or type inside
   another, so it cannot type into other apps.
 - No voice assistant on the TV itself.
-- English only for now. Devanagari dates are not shown because some old TVs ship without the font.
+- Nepali needs a Devanagari font on the TV; some old TVs ship without one.
 
 ## Credits
 

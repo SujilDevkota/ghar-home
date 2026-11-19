@@ -13,12 +13,18 @@ final class NepaliDate {
 
     static final String[] MONTHS = {"Baisakh", "Jestha", "Ashadh", "Shrawan", "Bhadra", "Ashoj",
             "Kartik", "Mangsir", "Poush", "Magh", "Falgun", "Chaitra"};
+    static final String[] MONTHS_NE = {"वैशाख", "जेठ", "असार", "साउन", "भदौ", "असोज",
+            "कात्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"};
+    static final String[] DAYS_EN = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
+    static final String[] DAYS_NE = {"आइत", "सोम", "मंगल", "बुध", "बिही", "शुक्र", "शनि"};
+    static final String[] AD_MONTHS = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
-    private static final int FIRST_YEAR = 2083;
+    static final int FIRST_YEAR = 2083;
     private static final int[][] DAYS = {
             {31, 31, 32, 31, 31, 31, 30, 29, 30, 29, 30, 30},   // 2083 (verified)
             {31, 31, 32, 31, 31, 30, 30, 30, 29, 30, 30, 30},   // 2084 (to verify)
     };
+    static final int LAST_YEAR = FIRST_YEAR + DAYS.length - 1;
     /** 1 Baisakh 2083 = 14 April 2026. */
     private static final long ANCHOR = dayNumber(2026, 4, 14);
 
@@ -32,10 +38,15 @@ final class NepaliDate {
             "Sonam Lhosar", "Democracy Day", "Maha Shivaratri", "Gyalpo Lhosar", "Fagu Purnima (Holi)", "Ghode Jatra",
             "Nepali New Year 2084",
     };
+    private static final String[] FEST_NAMES_NE = {
+            "योमरी पुन्ही", "क्रिसमस", "तमु ल्होसार", "पृथ्वी जयन्ती", "माघे संक्रान्ति", "शहीद दिवस",
+            "सोनाम ल्होसार", "प्रजातन्त्र दिवस", "महाशिवरात्रि", "ग्याल्पो ल्होसार", "फागु पूर्णिमा (होली)", "घोडेजात्रा",
+            "नयाँ वर्ष २०८४",
+    };
 
     private NepaliDate() { }
 
-    /** Days since a fixed point, from a calendar date (no time zones involved). */
+    /** Days since a fixed point (the Julian day number), from a calendar date: no time zones involved. */
     static long dayNumber(int y, int m, int d) {
         int a = (14 - m) / 12;
         long yy = y + 4800 - a;
@@ -43,32 +54,73 @@ final class NepaliDate {
         return d + (153 * mm + 2) / 5 + 365 * yy + yy / 4 - yy / 100 + yy / 400 - 32045;
     }
 
-    private static long today(Calendar c) {
+    /** The English date of a day number: {year, month, day}. */
+    static int[] english(long n) {
+        long a = n + 32044, b = (4 * a + 3) / 146097, c = a - 146097 * b / 4;
+        long d = (4 * c + 3) / 1461, e = c - 1461 * d / 4, m = (5 * e + 2) / 153;
+        return new int[] {(int) (100 * b + d - 4800 + m / 10), (int) (m + 3 - 12 * (m / 10)), (int) (e - (153 * m + 2) / 5 + 1)};
+    }
+
+    /** 0 = Sunday. */
+    static int weekday(long n) { return (int) ((n + 1) % 7); }
+
+    static long today(Calendar c) {
         return dayNumber(c.get(Calendar.YEAR), c.get(Calendar.MONTH) + 1, c.get(Calendar.DAY_OF_MONTH));
     }
 
-    /** "Mangsir 3, 2083 BS", or null when the date is outside the years this file knows. */
-    static String format(Calendar c) {
-        long n = today(c) - ANCHOR;
-        if (n < 0) return null;
+    /** {BS year, month 0-11, day} of a day number, or null outside the years this file knows. */
+    static int[] bs(long n) {
+        long left = n - ANCHOR;
+        if (left < 0) return null;
         for (int y = 0; y < DAYS.length; y++) {
             for (int m = 0; m < 12; m++) {
-                if (n < DAYS[y][m]) return MONTHS[m] + " " + (n + 1) + ", " + (FIRST_YEAR + y) + " BS";
-                n -= DAYS[y][m];
+                if (left < DAYS[y][m]) return new int[] {FIRST_YEAR + y, m, (int) left + 1};
+                left -= DAYS[y][m];
             }
         }
         return null;
     }
 
+    static int daysIn(int year, int month) { return DAYS[year - FIRST_YEAR][month]; }
+
+    /** The day number of the first day of a BS month. */
+    static long monthStart(int year, int month) {
+        long n = ANCHOR;
+        for (int y = FIRST_YEAR; y <= year; y++) {
+            for (int m = 0; m < 12; m++) {
+                if (y == year && m == month) return n;
+                n += DAYS[y - FIRST_YEAR][m];
+            }
+        }
+        return n;
+    }
+
+    /** The festival on a day, or null. */
+    static String festivalOn(long n, boolean ne) {
+        for (int i = 0; i < FEST_DATES.length; i++) {
+            if (dayNumber(FEST_DATES[i][0], FEST_DATES[i][1], FEST_DATES[i][2]) == n) return ne ? FEST_NAMES_NE[i] : FEST_NAMES[i];
+        }
+        return null;
+    }
+
+    /** "Mangsir 3, 2083 BS" (or "मंसिर ३, २०८३"), or null when the date is outside the years this file knows. */
+    static String format(Calendar c, boolean ne) {
+        int[] d = bs(today(c));
+        if (d == null) return null;
+        return ne ? MONTHS_NE[d[1]] + " " + T.num("" + d[2]) + ", " + T.num("" + d[0])
+                : MONTHS[d[1]] + " " + d[2] + ", " + d[0] + " BS";
+    }
+
     /** "Today: Maghe Sankranti", "Maghe Sankranti tomorrow", "Maghe Sankranti in 12 days", or null. */
-    static String festival(Calendar c) {
+    static String festival(Calendar c, boolean ne) {
         long now = today(c);
         for (int i = 0; i < FEST_DATES.length; i++) {
             long left = dayNumber(FEST_DATES[i][0], FEST_DATES[i][1], FEST_DATES[i][2]) - now;
             if (left < 0) continue;
-            if (left == 0) return "Today: " + FEST_NAMES[i];
-            if (left == 1) return FEST_NAMES[i] + " tomorrow";
-            if (left <= 60) return FEST_NAMES[i] + " in " + left + " days";
+            String name = ne ? FEST_NAMES_NE[i] : FEST_NAMES[i];
+            if (left == 0) return ne ? "आज: " + name : "Today: " + name;
+            if (left == 1) return ne ? "भोलि: " + name : name + " tomorrow";
+            if (left <= 60) return ne ? name + " — " + T.num("" + left) + " दिन बाँकी" : name + " in " + left + " days";
             return null;
         }
         return null;
