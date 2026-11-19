@@ -73,17 +73,23 @@ Google's old YouTube app, once; *Hidden apps* brings it back.
 
 ### Reaching other apps
 
-Android does not let one app press keys or type inside another. Two system features, which you turn on
-yourself in the TV's settings, make it possible. *Remote* on the TV has a button for each:
+Android does not let one app press keys or type inside another, but a keyboard may do both in the app it is
+attached to. *Remote* on the TV has the switch:
 
-- **Remote in other apps** opens the accessibility settings. Turn on *Ghar Home remote*. The phone's arrows,
-  OK and Back then work in other apps, and when the TV's own home screen appears Ghar Home takes its place,
-  so the Home button lands on Ghar Home. *TV home* in the footer still opens the original.
-- **Type from phone** opens the keyboard settings. Turn on *Ghar Home keyboard* and choose it. Text sent from
-  the phone goes into whichever text box is open on the TV. The same keyboard works with the TV remote.
+- **Phone in other apps** opens the TV's keyboard settings. Turn on *Ghar Home keyboard* and choose it as the
+  keyboard in use. The phone's arrows, OK and Back then go to whichever app is in front, and text sent from
+  the phone goes into the text box that is open. The same keyboard works with the TV remote.
+- On TVs that have an accessibility settings screen, *Ghar Home remote* can be turned on there as well; it is
+  used first when it is on. Many old TVs have no such screen, and the keyboard alone is enough.
 
-Some TV makers remove these settings screens; the buttons say so when that is the case. Apps that draw their
-own screen (games, some video players) may not respond to the arrows.
+Apps that draw their own screen (games, some video players) may not respond to the arrows.
+
+### The Home button
+
+Some TVs never ask which home screen to use. On Android 4.4, Ghar Home then watches for the maker's home
+screen and takes its place, so the Home button and the TV's start both land on Ghar Home. *TV home* in the
+footer opens the original and leaves it alone until Ghar Home is opened again. *Home button opens Ghar Home*
+under *Remote* turns this off.
 
 ### Weather city
 

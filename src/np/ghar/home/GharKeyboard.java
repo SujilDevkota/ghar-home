@@ -80,11 +80,17 @@ public class GharKeyboard extends InputMethodService {
         });
     }
 
-    /** An arrow or OK from the phone, passed to the app that owns the text box. */
-    void remoteKey(final int code) {
+    /**
+     * An arrow, OK or Back from the phone, passed to the app in front. A keyboard may send keys to the app
+     * it is attached to even when no text box is open, which is what makes the remote work in other apps.
+     * False when no app is attached.
+     */
+    boolean remoteKey(final int code) {
+        if (getCurrentInputConnection() == null) return false;
         handler.post(new Runnable() {
             @Override public void run() { sendDownUpKeyEvents(code); }
         });
+        return true;
     }
 
     private void done(InputConnection ic) {

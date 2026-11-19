@@ -12,6 +12,7 @@ import android.content.pm.ResolveInfo;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.view.KeyEvent;
@@ -90,12 +91,46 @@ public class LinkService extends Service {
         new Thread(new Runnable() {
             @Override public void run() { serve(); }
         }, "link").start();
+        if (Build.VERSION.SDK_INT < 21) {
+            new Thread(new Runnable() {
+                @Override public void run() { watchHome(); }
+            }, "home-watch").start();
+        }
     }
 
     @Override public void onDestroy() {
         running = false;
         try { if (server != null) server.close(); } catch (IOException ignored) { }
         super.onDestroy();
+    }
+
+    /**
+     * Android 4.4 TVs that never ask which home screen to use: when the maker's one comes to the front,
+     * Ghar Home takes its place, so the Home button and the TV's start both land here.
+     * Not while the user asked for the original ("TV home"), not after a crash, and not when switched off.
+     */
+    private void watchHome() {
+        java.util.HashSet<String> homes = new java.util.HashSet<String>();
+        try {
+            Intent home = new Intent(Intent.ACTION_MAIN);
+            home.addCategory(Intent.CATEGORY_HOME);
+            for (ResolveInfo r : getPackageManager().queryIntentActivities(home, 0)) {
+                String p = r.activityInfo == null ? null : r.activityInfo.packageName;
+                if (p != null && !p.equals(getPackageName()) && !p.equals("com.android.settings")) homes.add(p);
+            }
+        } catch (Exception ignored) { }
+        android.app.ActivityManager am = (android.app.ActivityManager) getSystemService(ACTIVITY_SERVICE);
+        SharedPreferences prefs = getSharedPreferences("ghar", MODE_PRIVATE);
+        while (running && !homes.isEmpty()) {
+            try {
+                Thread.sleep(700);
+                if (HomeActivity.showing != null || GharAccess.letOriginal) continue;
+                if (!prefs.getBoolean("take_home", true) || prefs.getInt("crashes", 0) > 0) continue;
+                List<android.app.ActivityManager.RunningTaskInfo> tasks = am.getRunningTasks(1);
+                if (tasks == null || tasks.isEmpty() || tasks.get(0).topActivity == null) continue;
+                if (homes.contains(tasks.get(0).topActivity.getPackageName())) goHome();
+            } catch (Throwable ignored) { }
+        }
     }
 
     private void serve() {
@@ -329,11 +364,8 @@ public class LinkService extends Service {
             GharAccess access = GharAccess.active;
             if (access != null) return access.key(code) ? "" : "Nothing to do there";
             GharKeyboard keyboard = GharKeyboard.active;
-            if (keyboard != null && keyboard.inputActive) {
-                keyboard.remoteKey(code);
-                return "";
-            }
-            return "To use the remote in other apps, turn it on at Remote on the TV.";
+            if (keyboard != null && keyboard.remoteKey(code)) return "";
+            return "To use the remote in other apps, choose the Ghar Home keyboard at Remote on the TV.";
         }
     }
 

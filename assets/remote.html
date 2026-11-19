@@ -100,7 +100,7 @@ function load(){api('info',function(r){
   (r.themes||[]).forEach(function(n,i){var b=document.createElement('button');b.className='sw'+(r.theme===i?' sel':'');
     b.style.background=COLORS[i]||'#222';b.textContent=n;b.onclick=function(){theme(i)};t.appendChild(b)});
   document.getElementById('cityNow').textContent=r.city?'Now: '+r.city:'';
-  document.getElementById('reach').textContent='Remote in other apps: '+(r.access?'on':'off')+'. Typing from phone: '+(r.keyboard?'on':'off')+'. Change both at Remote on the TV.';
+  document.getElementById('reach').textContent=(r.keyboard||r.access)?'Works in other apps too.':'To use the remote and typing in other apps, choose the Ghar Home keyboard at Remote on the TV.';
   msg('')})}
 load();
 </script></body></html>

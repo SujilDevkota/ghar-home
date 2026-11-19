@@ -42,11 +42,8 @@ public class GharAccess extends AccessibilityService {
         try {
             if (event.getEventType() != AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED || event.getPackageName() == null) return;
             String pkg = event.getPackageName().toString();
-            if (pkg.equals(getPackageName())) {
-                letOriginal = false;
-                return;
-            }
-            if (letOriginal) return;
+            if (pkg.equals(getPackageName()) || letOriginal) return;
+            if (!getSharedPreferences("ghar", MODE_PRIVATE).getBoolean("take_home", true)) return;
             if (homes == null) {
                 homes = new java.util.HashSet<String>();
                 Intent home = new Intent(Intent.ACTION_MAIN);

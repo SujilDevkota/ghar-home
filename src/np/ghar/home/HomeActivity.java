@@ -206,6 +206,7 @@ public class HomeActivity extends Activity {
     @Override protected void onResume() {
         super.onResume();
         showing = this;
+        GharAccess.letOriginal = false;      // back here: the Home button is ours again
         applyBackground();
         if (usesChanged && favRow != null && !apps.isEmpty()) {    // back from an app: the order may have changed
             usesChanged = false;
@@ -796,7 +797,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.6" : T.t("No internet") + "   \u2022   Ghar Home 0.6");
+        net.setText(online ? "Ghar Home 0.7" : T.t("No internet") + "   \u2022   Ghar Home 0.7");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         if (online) refreshWeather(false);
@@ -957,15 +958,16 @@ public class HomeActivity extends Activity {
         side.addView(how);
         // The two switches that let the phone reach other apps. Both live in the TV's own settings.
         final AlertDialog[] dialog = new AlertDialog[1];
-        boolean accessOn = GharAccess.active != null;
-        View access = pill(T.t("Remote in other apps") + ": " + T.t(accessOn ? "on" : "off"), new Runnable() {
+        final boolean enabled = keyboardEnabled(), chosen = keyboardChosen();
+        final boolean take = prefs.getBoolean("take_home", true);
+        View access = pill(T.t("Home button opens Ghar Home") + ": " + T.t(take ? "on" : "off"), new Runnable() {
             @Override public void run() {
                 dialog[0].dismiss();
-                openSetting(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+                prefs.edit().putBoolean("take_home", !take).apply();
+                toast(take ? "The Home button opens the TV's own home screen" : "The Home button opens Ghar Home");
             }
         });
-        final boolean enabled = keyboardEnabled(), chosen = keyboardChosen();
-        View typing = pill(T.t("Type from phone") + ": " + T.t(chosen ? "on" : enabled ? "choose keyboard" : "off"), new Runnable() {
+        View typing = pill(T.t("Phone in other apps") + ": " + T.t(chosen ? "on" : enabled ? "choose keyboard" : "off"), new Runnable() {
             @Override public void run() {
                 dialog[0].dismiss();
                 if (enabled) {
