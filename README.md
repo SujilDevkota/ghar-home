@@ -25,6 +25,10 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
   keys, OK, Back, Home, the list of apps, wallpapers, the weather city, and a box to open an app by name.
   Use the microphone or handwriting mode of your phone's keyboard to speak or draw the name. Nothing is
   installed on the phone.
+- **Remote and typing inside other apps** (optional). Two switches under *Remote* let the phone move, select
+  and go back in any app, and type into any text box. See [Reaching other apps](#reaching-other-apps).
+- **Starts with the TV.** Ghar Home opens when the TV has started, and can take the Home button on TVs that
+  never ask which home screen to use.
 - **Install apps over Wi-Fi.** Send an APK from a computer and the TV's installer opens.
 - **Small sounds.** A chime when the home screen has loaded and a quiet tick when you move; *Sound* in the
   footer turns them off.
@@ -67,6 +71,20 @@ Google's old YouTube app, once; *Hidden apps* brings it back.
 | Hold OK, or Menu | Options: add to or remove from Favourites, move left or right, hide, app info, uninstall |
 | Home or Back | Back to the top of the home screen |
 
+### Reaching other apps
+
+Android does not let one app press keys or type inside another. Two system features, which you turn on
+yourself in the TV's settings, make it possible. *Remote* on the TV has a button for each:
+
+- **Remote in other apps** opens the accessibility settings. Turn on *Ghar Home remote*. The phone's arrows,
+  OK and Back then work in other apps, and when the TV's own home screen appears Ghar Home takes its place,
+  so the Home button lands on Ghar Home. *TV home* in the footer still opens the original.
+- **Type from phone** opens the keyboard settings. Turn on *Ghar Home keyboard* and choose it. Text sent from
+  the phone goes into whichever text box is open on the TV. The same keyboard works with the TV remote.
+
+Some TV makers remove these settings screens; the buttons say so when that is the case. Apps that draw their
+own screen (games, some video players) may not respond to the arrows.
+
 ### Weather city
 
 Open the phone remote and type a city under *Weather city*. The TV has no GPS, so it cannot find its own
@@ -107,6 +125,9 @@ update each other.
 | [`WeatherArt.java`](src/np/ghar/home/WeatherArt.java) | The weather picture behind the header |
 | [`Weather.java`](src/np/ghar/home/Weather.java) | Weather and city lookup from Open-Meteo |
 | [`Qr.java`](src/np/ghar/home/Qr.java) | The QR code encoder |
+| [`GharAccess.java`](src/np/ghar/home/GharAccess.java) | The accessibility service: remote keys in other apps, and taking the Home button |
+| [`GharKeyboard.java`](src/np/ghar/home/GharKeyboard.java) | The TV keyboard that also takes text from the phone |
+| [`BootReceiver.java`](src/np/ghar/home/BootReceiver.java) | Starts Ghar Home when the TV starts |
 | [`assets/remote.html`](assets/remote.html) | The phone remote page |
 
 Everything has to run on Android 4.4 (API 19), so the code avoids anything newer.
@@ -129,6 +150,9 @@ are welcome.
 - The only outside service is [Open-Meteo](https://open-meteo.com), asked for the weather of the city you set.
 - **The weather is fetched over plain http.** Android 4.4 does not trust the certificates today's https sites
   use. Someone on your network could alter the temperature shown; nothing else is read from the answer.
+- **The accessibility service is off until you turn it on.** It moves the focus, clicks and goes back when
+  your phone sends a command with the PIN, and it watches which app comes to the front so it can replace the
+  TV's own home screen. It does not read or store what is on screen.
 - **The TV runs a small web server on port 8765** while Ghar Home is running, for the phone remote and for
   installs. Every action needs the 6-digit PIN made on that TV, and an install still has to be confirmed on
   the TV. It is plain http and meant for a home network: don't use it on Wi-Fi you don't trust.
@@ -136,8 +160,7 @@ are welcome.
 ## Limits
 
 - It changes the home screen, not Android. Apps that have stopped supporting old Android still won't run.
-- The phone remote controls Ghar Home and opens apps. Android does not let one app press keys or type inside
-  another, so it cannot type into other apps.
+- Inside other apps, the phone remote needs the two switches described under *Reaching other apps*.
 - No voice assistant on the TV itself.
 - Nepali needs a Devanagari font on the TV; some old TVs ship without one.
 

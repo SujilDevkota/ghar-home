@@ -44,6 +44,8 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
+import android.view.inputmethod.InputMethodInfo;
+import android.view.inputmethod.InputMethodManager;
 import android.view.animation.OvershootInterpolator;
 import android.widget.FrameLayout;
 import android.widget.HorizontalScrollView;
@@ -306,6 +308,7 @@ public class HomeActivity extends Activity {
                 i.addCategory(Intent.CATEGORY_HOME);
                 i.setComponent(new ComponentName(a.packageName, a.name));
                 i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                GharAccess.letOriginal = true;      // asked for: don't jump straight back here
                 startActivity(i);
                 return true;
             }
@@ -793,7 +796,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.5" : T.t("No internet") + "   \u2022   Ghar Home 0.5");
+        net.setText(online ? "Ghar Home 0.6" : T.t("No internet") + "   \u2022   Ghar Home 0.6");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         if (online) refreshWeather(false);
@@ -887,6 +890,34 @@ public class HomeActivity extends Activity {
 
     // ---------------------------------------------------------------- phone remote
 
+    private void openSetting(String action) {
+        try {
+            startActivity(new Intent(action).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+        } catch (Exception e) {
+            toast("This TV's settings have no such screen");
+        }
+    }
+
+    /** Whether the Ghar Home keyboard is switched on in the TV's list of keyboards. */
+    private boolean keyboardEnabled() {
+        try {
+            for (InputMethodInfo i : ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).getEnabledInputMethodList()) {
+                if (getPackageName().equals(i.getPackageName())) return true;
+            }
+        } catch (Exception ignored) { }
+        return false;
+    }
+
+    /** Whether it is the keyboard in use. */
+    private boolean keyboardChosen() {
+        try {
+            String now = Settings.Secure.getString(getContentResolver(), Settings.Secure.DEFAULT_INPUT_METHOD);
+            return now != null && now.startsWith(getPackageName() + "/");
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     /** A QR code that opens the remote on a phone, already signed in with the PIN. */
     private void showRemote() {
         String ip = LinkService.address();
@@ -902,7 +933,7 @@ public class HomeActivity extends Activity {
         box.setPadding(4 * u, 4 * u, 4 * u, 4 * u);
         boolean[][] code = Qr.encode(address + "/?pin=" + pin);
         if (code != null) {
-            int quiet = 4, cells = code.length + 2 * quiet, cell = Math.max(2, 44 * u / cells);
+            int quiet = 4, cells = code.length + 2 * quiet, cell = Math.max(2, 38 * u / cells);
             Bitmap b = Bitmap.createBitmap(cells * cell, cells * cell, Bitmap.Config.RGB_565);
             Canvas c = new Canvas(b);
             c.drawColor(Color.WHITE);
@@ -917,12 +948,43 @@ public class HomeActivity extends Activity {
             qr.setImageBitmap(b);
             box.addView(qr);
         }
-        TextView how = text(T.t("Scan with your phone's camera.") + "\n\n" + T.t("The phone must be on the same Wi-Fi as the TV.")
-                + "\n\n" + T.t("Or open") + "  " + address + "\n" + T.t("and enter PIN") + "  " + pin, 2.6f, Color.WHITE);
-        how.setLineSpacing(0, 1.25f);
-        how.setPadding(4 * u, 0, 0, 0);
-        box.addView(how);
-        new AlertDialog.Builder(this).setTitle(T.t("Phone remote")).setView(box).setPositiveButton(T.t("Close"), null).show();
+        TextView how = text(T.t("Scan with your phone's camera.") + " " + T.t("The phone must be on the same Wi-Fi as the TV.")
+                + "\n\n" + T.t("Or open") + "  " + address + "\n" + T.t("and enter PIN") + "  " + pin, 2.4f, Color.WHITE);
+        how.setLineSpacing(0, 1.2f);
+        LinearLayout side = new LinearLayout(this);
+        side.setOrientation(LinearLayout.VERTICAL);
+        side.setPadding(4 * u, 0, 0, 0);
+        side.addView(how);
+        // The two switches that let the phone reach other apps. Both live in the TV's own settings.
+        final AlertDialog[] dialog = new AlertDialog[1];
+        boolean accessOn = GharAccess.active != null;
+        View access = pill(T.t("Remote in other apps") + ": " + T.t(accessOn ? "on" : "off"), new Runnable() {
+            @Override public void run() {
+                dialog[0].dismiss();
+                openSetting(Settings.ACTION_ACCESSIBILITY_SETTINGS);
+            }
+        });
+        final boolean enabled = keyboardEnabled(), chosen = keyboardChosen();
+        View typing = pill(T.t("Type from phone") + ": " + T.t(chosen ? "on" : enabled ? "choose keyboard" : "off"), new Runnable() {
+            @Override public void run() {
+                dialog[0].dismiss();
+                if (enabled) {
+                    try {
+                        ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).showInputMethodPicker();
+                    } catch (Exception e) {
+                        openSetting(Settings.ACTION_INPUT_METHOD_SETTINGS);
+                    }
+                } else {
+                    openSetting(Settings.ACTION_INPUT_METHOD_SETTINGS);
+                }
+            }
+        });
+        ((LinearLayout.LayoutParams) access.getLayoutParams()).setMargins(0, 3 * u, 0, u);
+        ((LinearLayout.LayoutParams) typing.getLayoutParams()).setMargins(0, u, 0, 0);
+        side.addView(access);
+        side.addView(typing);
+        box.addView(side, new LinearLayout.LayoutParams(0, -2, 1f));
+        dialog[0] = new AlertDialog.Builder(this).setTitle(T.t("Phone remote")).setView(box).setPositiveButton(T.t("Close"), null).show();
     }
 
     // ---------------------------------------------------------------- apps

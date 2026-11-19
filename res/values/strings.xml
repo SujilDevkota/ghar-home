@@ -1,4 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Ghar Home</string>
+    <string name="keyboard_name">Ghar Home keyboard</string>
+    <string name="access_name">Ghar Home remote</string>
+    <string name="access_desc">Lets the Ghar Home phone remote move, select and go back inside other apps, and brings Ghar Home back when the TV\'s own home screen appears. It acts only on commands from your phone that carry the TV\'s PIN, and it does not read or store what is on screen.</string>
 </resources>

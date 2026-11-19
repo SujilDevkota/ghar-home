@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="np.ghar.home"
-    android:versionCode="5"
-    android:versionName="0.5">
+    android:versionCode="6"
+    android:versionName="0.6">
 
     <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="23" />
 
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
     <uses-permission android:name="android.permission.REQUEST_DELETE_PACKAGES" />
 
     <uses-feature android:name="android.software.leanback" android:required="false" />
@@ -43,5 +44,31 @@
         </activity>
         <!-- The phone remote and install-over-Wi-Fi server (port 8765, PIN shown on the TV). -->
         <service android:name=".LinkService" android:exported="false" />
+
+        <!-- Starts the phone link and shows Ghar Home when the TV has started. -->
+        <receiver android:name=".BootReceiver" android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+        <!-- A TV keyboard that also takes text from the phone remote. The user chooses it in the TV's settings. -->
+        <service android:name=".GharKeyboard" android:label="@string/keyboard_name" android:exported="true"
+            android:permission="android.permission.BIND_INPUT_METHOD">
+            <intent-filter>
+                <action android:name="android.view.InputMethod" />
+            </intent-filter>
+            <meta-data android:name="android.view.im" android:resource="@xml/method" />
+        </service>
+
+        <!-- Lets the phone remote move, select and go back inside other apps. The user turns it on in the TV's settings. -->
+        <service android:name=".GharAccess" android:label="@string/access_name" android:exported="true"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data android:name="android.accessibilityservice" android:resource="@xml/access" />
+        </service>
     </application>
 </manifest>

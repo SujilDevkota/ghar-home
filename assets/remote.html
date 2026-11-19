@@ -51,6 +51,11 @@ small{color:#8fa3c8;display:block;margin-top:8px;line-height:1.45;font-size:13px
 </div>
 <div class="keys"><button onclick="key('back')">Back</button><button onclick="key('home')">Home</button><button onclick="key('menu')">Menu</button></div>
 
+<h2>Type on the TV</h2>
+<form onsubmit="typeText();return false"><input type="text" id="t" placeholder="Text for the box open on the TV" autocomplete="off"><button>Send</button></form>
+<div class="keys" style="grid-template-columns:repeat(2,1fr);margin:10px 0 0"><button onclick="api('type?k=backspace')">Delete</button><button onclick="api('type?k=enter')">Enter</button></div>
+<small id="reach"></small>
+
 <h2>Open an app</h2>
 <form onsubmit="say();return false"><input type="text" id="q" placeholder="Say or type a name" autocomplete="off"><button>Go</button></form>
 <small>Use the microphone or handwriting mode of your keyboard to speak or draw the name.</small>
@@ -81,6 +86,7 @@ function api(path,cb){askPin();var x=new XMLHttpRequest();x.open('GET',url(path)
   x.onload=function(){done(x,cb)};x.onerror=function(){online(false);msg('TV not reachable')};x.send()}
 function key(k){if(navigator.vibrate)navigator.vibrate(12);api('key?k='+k)}
 function say(){var q=document.getElementById('q');api('say?q='+encodeURIComponent(q.value));q.value=''}
+function typeText(){var t=document.getElementById('t');if(t.value)api('type?q='+encodeURIComponent(t.value));t.value=''}
 function city(){var c=document.getElementById('c');api('city?q='+encodeURIComponent(c.value),load);c.value=''}
 function theme(i){api('theme?i='+i,load)}
 function photo(el){var f=el.files[0];if(!f)return;askPin();msg('Sending photo…');
@@ -94,6 +100,7 @@ function load(){api('info',function(r){
   (r.themes||[]).forEach(function(n,i){var b=document.createElement('button');b.className='sw'+(r.theme===i?' sel':'');
     b.style.background=COLORS[i]||'#222';b.textContent=n;b.onclick=function(){theme(i)};t.appendChild(b)});
   document.getElementById('cityNow').textContent=r.city?'Now: '+r.city:'';
+  document.getElementById('reach').textContent='Remote in other apps: '+(r.access?'on':'off')+'. Typing from phone: '+(r.keyboard?'on':'off')+'. Change both at Remote on the TV.';
   msg('')})}
 load();
 </script></body></html>

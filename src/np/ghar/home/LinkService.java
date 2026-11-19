@@ -169,7 +169,8 @@ public class LinkService extends Service {
                 b.append(i > 0 ? "," : "").append('"').append(esc(HomeActivity.THEME_NAMES[i])).append('"');
             }
             b.append("],\"theme\":").append(getSharedPreferences("ghar", MODE_PRIVATE).getInt(HomeActivity.KEY_THEME, 0))
-                    .append(",\"city\":\"").append(esc(Weather.city(getSharedPreferences("ghar", MODE_PRIVATE)))).append("\",\"apps\":[");
+                    .append(",\"city\":\"").append(esc(Weather.city(getSharedPreferences("ghar", MODE_PRIVATE)))).append("\",\"access\":").append(GharAccess.active != null)
+                    .append(",\"keyboard\":").append(GharKeyboard.active != null).append(",\"apps\":[");
             List<String[]> apps = apps();
             for (int i = 0; i < apps.size(); i++) {
                 if (i > 0) b.append(',');
@@ -191,6 +192,8 @@ public class LinkService extends Service {
                 home.runOnUiThread(new Runnable() { @Override public void run() { home.refreshWeather(true); } });
             }
             json(out, 200, found == null ? "City not found" : "Weather set to " + found);
+        } else if (path.equals("/api/type")) {
+            json(out, 200, type(query.get("q"), query.get("k")));
         } else if (path.equals("/api/theme")) {
             int i = -9;
             try { i = Integer.parseInt(query.get("i")); } catch (Exception ignored) { }
@@ -322,7 +325,15 @@ public class LinkService extends Service {
             // Some Android versions refuse even that: then the home screen moves its own focus.
             HomeActivity home = HomeActivity.showing;
             if (home != null && home.remoteKey(code)) return "";
-            return "Another app is on screen. Tap Home first.";
+            // Another app is in front: the accessibility service acts there, when the user has turned it on.
+            GharAccess access = GharAccess.active;
+            if (access != null) return access.key(code) ? "" : "Nothing to do there";
+            GharKeyboard keyboard = GharKeyboard.active;
+            if (keyboard != null && keyboard.inputActive) {
+                keyboard.remoteKey(code);
+                return "";
+            }
+            return "To use the remote in other apps, turn it on at Remote on the TV.";
         }
     }
 
@@ -367,6 +378,19 @@ public class LinkService extends Service {
             if (best == null && (label.contains(q) || label.replace(" ", "").contains(squeezed))) best = app;
         }
         return best == null ? "No app called \"" + text.trim() + "\"" : open(best[0]);
+    }
+
+    /** Text from the phone into the text box that is open on the TV, in any app. */
+    private String type(String text, String key) {
+        GharKeyboard keyboard = GharKeyboard.active;
+        if (keyboard != null && keyboard.inputActive) {
+            keyboard.remote(text, key);
+            return "";
+        }
+        GharAccess access = GharAccess.active;
+        if (text != null && text.length() > 0 && access != null && access.type(text)) return "";
+        if (keyboard == null) return "To type from the phone, choose the Ghar Home keyboard at Remote on the TV.";
+        return "Select a text box on the TV first.";
     }
 
     private void refreshBackground() {
