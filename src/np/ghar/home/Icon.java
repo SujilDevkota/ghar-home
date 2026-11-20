@@ -12,7 +12,7 @@ import android.graphics.drawable.Drawable;
 /** Small status icons, drawn by hand so they are sharp at any size and need no image files. */
 final class Icon extends Drawable {
 
-    static final int SPEAKER = 0, USB = 1, BLUETOOTH = 2, WIRED = 3, FLAG_NEPAL = 4, FLAG_UK = 5, WIFI = 6;
+    static final int SPEAKER = 0, USB = 1, BLUETOOTH = 2, WIRED = 3, FLAG_NEPAL = 4, FLAG_US = 5, WIFI = 6;
 
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
@@ -123,34 +123,24 @@ final class Icon extends Drawable {
             c.drawCircle(x + 0.36f * s, y + 0.34f * s, 0.07f * s, p);
             c.drawCircle(x + 0.38f * s, y + 0.74f * s, 0.09f * s, p);
             p.setColor(keep);
-        } else if (kind == FLAG_UK) {
-            // The Union flag, simplified: blue, the white and red diagonals, then the white and red cross.
+        } else if (kind == FLAG_US) {
+            // The United States flag, simplified: seven stripes, and a blue canton with a few stars as dots.
             int keep = p.getColor();
-            float l = x + 0.04f * s, t = y + 0.22f * s, rr = x + 0.96f * s, bb = y + 0.78f * s, mx = (l + rr) / 2, my = (t + bb) / 2;
-            c.save();
-            c.clipRect(l, t, rr, bb);
+            float l = x + 0.04f * s, t = y + 0.22f * s, rr = x + 0.96f * s, bb = y + 0.78f * s, stripe = (bb - t) / 7f;
             p.setStyle(Paint.Style.FILL);
-            p.setColor(0xFF012169);
-            c.drawRect(l, t, rr, bb, p);
-            p.setStyle(Paint.Style.STROKE);
-            p.setStrokeCap(Paint.Cap.BUTT);
+            for (int i = 0; i < 7; i++) {
+                p.setColor(i % 2 == 0 ? 0xFFB22234 : 0xFFFFFFFF);
+                c.drawRect(l, t + i * stripe, rr, t + (i + 1) * stripe, p);
+            }
+            float cw = (rr - l) * 0.44f, ch = stripe * 4f;
+            p.setColor(0xFF3C3B6E);
+            c.drawRect(l, t, l + cw, t + ch, p);
             p.setColor(0xFFFFFFFF);
-            p.setStrokeWidth(0.14f * s);
-            c.drawLine(l, t, rr, bb, p);
-            c.drawLine(l, bb, rr, t, p);
-            p.setColor(0xFFC8102E);
-            p.setStrokeWidth(0.05f * s);
-            c.drawLine(l, t, rr, bb, p);
-            c.drawLine(l, bb, rr, t, p);
-            p.setColor(0xFFFFFFFF);
-            p.setStrokeWidth(0.20f * s);
-            c.drawLine(mx, t, mx, bb, p);
-            c.drawLine(l, my, rr, my, p);
-            p.setColor(0xFFC8102E);
-            p.setStrokeWidth(0.11f * s);
-            c.drawLine(mx, t, mx, bb, p);
-            c.drawLine(l, my, rr, my, p);
-            c.restore();
+            for (int row = 0; row < 3; row++) {
+                for (int col = 0; col < 3; col++) {
+                    c.drawCircle(l + cw * (0.2f + 0.3f * col), t + ch * (0.2f + 0.3f * row), Math.max(0.6f, 0.022f * s), p);
+                }
+            }
             p.setColor(keep);
         } else {
             // A USB stick: the body, the metal plug and its two contacts.

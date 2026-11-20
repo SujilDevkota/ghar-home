@@ -613,7 +613,7 @@ public class HomeActivity extends Activity {
         footer.addView(pill("Options", new Runnable() { @Override public void run() { showOptions(); } }));
         // The language in use, as its flag: OK switches to the other one.
         TextView flag = (TextView) pill("", new Runnable() { @Override public void run() { switchLanguage(); } });
-        flag.setCompoundDrawablesWithIntrinsicBounds(new Icon(T.ne ? Icon.FLAG_NEPAL : Icon.FLAG_UK, (int) (2.9f * u), Color.WHITE), null, null, null);
+        flag.setCompoundDrawablesWithIntrinsicBounds(new Icon(T.ne ? Icon.FLAG_NEPAL : Icon.FLAG_US, (int) (2.9f * u), Color.WHITE), null, null, null);
         flag.setCompoundDrawablePadding(0);
         flag.setPadding(2 * u, (int) (1.3f * u), 2 * u, (int) (1.3f * u));
         footer.addView(flag);
@@ -1108,7 +1108,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.20" : T.t("No internet") + "   \u2022   Ghar Home 0.20");
+        net.setText(online ? "Ghar Home 0.21" : T.t("No internet") + "   \u2022   Ghar Home 0.21");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();

@@ -199,7 +199,7 @@ public class LinkService extends Service {
         }
 
         if (path.equals("/api/info")) {
-            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.20\",\"inputs\":[");
+            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.21\",\"inputs\":[");
             int[] inputs = TvInput.inputs();
             for (int i = 0; i < inputs.length; i++) {
                 b.append(i > 0 ? "," : "").append("{\"i\":").append(inputs[i]).append(",\"name\":\"").append(esc(TvInput.name(this, inputs[i])))
@@ -233,6 +233,10 @@ public class LinkService extends Service {
                 home.runOnUiThread(new Runnable() { @Override public void run() { home.refreshWeather(true); } });
             }
             json(out, 200, found == null ? "City not found" : "Weather set to " + found);
+        } else if (path.equals("/api/state")) {
+            // Asked every couple of seconds by the phone page: is a text box open on the TV right now?
+            GharKeyboard keyboard = GharKeyboard.active;
+            reply(out, 200, "application/json", ("{\"typing\":" + (keyboard != null && keyboard.inputActive) + "}").getBytes("UTF-8"));
         } else if (path.equals("/api/screenshot")) {
             byte[] jpeg = screenshot();
             if (jpeg == null) json(out, 200, "Ghar Home is not on screen");

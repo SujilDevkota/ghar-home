@@ -38,8 +38,8 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
   SmartTube).
 - **Phone remote.** *Remote* in the footer shows a QR code. Scan it and your phone becomes a remote: arrow
   keys, OK, Back, Home, the list of apps, wallpapers, the weather city, and a box to open an app by name.
-  Use the microphone or handwriting mode of your phone's keyboard to speak or draw the name. Nothing is
-  installed on the phone.
+  When a text box opens on the TV, a typing bar drops down on the phone by itself. Use the microphone or
+  handwriting mode of your phone's keyboard to speak or draw. Nothing is installed on the phone.
 - **Remote and typing inside other apps** (optional). Two switches under *Remote* let the phone move, select
   and go back in any app, and type into any text box. See [Reaching other apps](#reaching-other-apps).
 - **Starts with the TV.** Ghar Home opens when the TV has started, and can take the Home button on TVs that

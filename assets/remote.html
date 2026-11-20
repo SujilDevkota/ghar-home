@@ -39,7 +39,17 @@ small{color:#8fa3c8;display:block;margin-top:8px;line-height:1.45;font-size:13px
 .sw.sel{border-color:#fff}
 .photo{display:block;margin-top:8px;text-align:center;background:rgba(255,255,255,.08);border-radius:14px;padding:14px;font-size:15px}
 .photo input{display:none}
-</style></head><body><div class="wrap">
+#typing{display:none;position:fixed;left:0;right:0;top:0;z-index:5;background:#16224a;padding:14px 16px 16px;
+ box-shadow:0 10px 30px rgba(0,0,0,.5);border-bottom:2px solid #2f6bff}
+#typing.on{display:block}
+#typing b{display:block;font-size:14px;font-weight:600;color:#9fc0ff;margin-bottom:8px;letter-spacing:.4px}
+#typing input[type=text]{font-size:19px;padding:15px}
+#typing .keys{grid-template-columns:repeat(3,1fr);margin:10px 0 0}
+</style></head><body><div id="typing"><b>The TV is waiting for text</b>
+<form onsubmit="typeNow();return false"><input type="text" id="tn" placeholder="Type or speak here" autocomplete="off"><button>Send</button></form>
+<div class="keys"><button onclick="api('type?k=backspace')">Delete</button><button onclick="api('type?k=enter')">Enter</button><button onclick="hideTyping()">Hide</button></div>
+</div>
+<div class="wrap">
 <header><h1>Ghar Home</h1><span class="dot" id="dot"></span></header>
 <div id="msg"></div>
 <div class="pad">
@@ -99,6 +109,21 @@ function key(k){if(navigator.vibrate)navigator.vibrate(12);api('key?k='+k)}
 function say(){var q=document.getElementById('q');api('say?q='+encodeURIComponent(q.value));q.value=''}
 function typeText(){var t=document.getElementById('t');if(t.value)api('type?q='+encodeURIComponent(t.value));t.value=''}
 function sendLink(){var l=document.getElementById('l');if(l.value)api('link?u='+encodeURIComponent(l.value));l.value=''}
+function typeNow(){var t=document.getElementById('tn');if(t.value)api('type?q='+encodeURIComponent(t.value));t.value='';t.focus()}
+// When a text box opens on the TV, a typing bar drops down here; it goes away when the box closes.
+var typingOn=false,typingHidden=false;
+function hideTyping(){typingHidden=true;document.getElementById('typing').className=''}
+function watchTyping(){
+  if(!pin||document.hidden){setTimeout(watchTyping,2000);return}
+  var x=new XMLHttpRequest();x.open('GET',url('state'));x.timeout=4000;
+  x.onload=function(){var r={};try{r=JSON.parse(x.responseText)}catch(e){}
+    if(x.status==200){online(true);
+      if(r.typing&&!typingOn){typingHidden=false;if(navigator.vibrate)navigator.vibrate(30)}
+      typingOn=!!r.typing;
+      document.getElementById('typing').className=typingOn&&!typingHidden?'on':''}
+    setTimeout(watchTyping,2000)};
+  x.onerror=x.ontimeout=function(){online(false);setTimeout(watchTyping,4000)};
+  x.send()}
 function city(){var c=document.getElementById('c');api('city?q='+encodeURIComponent(c.value),load);c.value=''}
 function theme(i){api('theme?i='+i,load)}
 function photo(el){var f=el.files[0];if(!f)return;askPin();msg('Sending photo…');
@@ -130,4 +155,5 @@ function load(){api('info',function(r){
   document.getElementById('reach').textContent=(r.keyboard||r.access)?'Works in other apps too.':'To use the remote and typing in other apps, choose the Ghar Home keyboard at Remote on the TV.';
   msg('')})}
 load();
+watchTyping();
 </script></body></html>
