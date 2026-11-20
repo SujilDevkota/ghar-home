@@ -36,7 +36,10 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
+import android.text.SpannableString;
 import android.text.TextUtils;
+import android.text.style.ForegroundColorSpan;
+import android.text.style.RelativeSizeSpan;
 import android.util.DisplayMetrics;
 import android.util.TypedValue;
 import android.view.Gravity;
@@ -432,13 +435,22 @@ public class HomeActivity extends Activity {
         status.setClipChildren(false);
         try {
             for (final int input : TvInput.inputs()) {
-                // A dot marks an input with something plugged in and switched on, such as a set-top box.
-                status.addView(pill(TvInput.name(this, input) + (TvInput.live(input) ? "  \u2022" : ""), new Runnable() {
+                TextView button = (TextView) pill(TvInput.name(this, input), new Runnable() {
                     @Override public void run() {
                         String problem = TvInput.show(HomeActivity.this, input);
                         if (problem != null) Toast.makeText(HomeActivity.this, problem, Toast.LENGTH_LONG).show();
                     }
-                }));
+                });
+                // A green dot marks an input with something plugged in and switched on, such as a set-top box.
+                if (TvInput.live(input)) {
+                    SpannableString label = new SpannableString(button.getText() + "  \u2022");
+                    int dot = label.length() - 1;
+                    label.setSpan(new ForegroundColorSpan(0xFF3DDC97), dot, dot + 1, 0);
+                    label.setSpan(new RelativeSizeSpan(1.3f), dot, dot + 1, 0);
+                    button.setText(label);
+                    button.setIncludeFontPadding(false);
+                }
+                status.addView(button);
             }
         } catch (Throwable ignored) { }      // a TV whose inputs this app can't reach: no buttons
         View gap = new View(this);
@@ -864,7 +876,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.10" : T.t("No internet") + "   \u2022   Ghar Home 0.10");
+        net.setText(online ? "Ghar Home 0.11" : T.t("No internet") + "   \u2022   Ghar Home 0.11");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
