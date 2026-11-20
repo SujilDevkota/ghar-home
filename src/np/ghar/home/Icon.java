@@ -12,7 +12,7 @@ import android.graphics.drawable.Drawable;
 /** Small status icons, drawn by hand so they are sharp at any size and need no image files. */
 final class Icon extends Drawable {
 
-    static final int SPEAKER = 0, USB = 1, BLUETOOTH = 2, WIRED = 3, FLAG_NEPAL = 4, FLAG_UK = 5;
+    static final int SPEAKER = 0, USB = 1, BLUETOOTH = 2, WIRED = 3, FLAG_NEPAL = 4, FLAG_UK = 5, WIFI = 6;
 
     private final Paint p = new Paint(Paint.ANTI_ALIAS_FLAG);
     private final Path path = new Path();
@@ -20,6 +20,8 @@ final class Icon extends Drawable {
     private final int kind, size;
     /** For the speaker: 0 to 1, how many of its waves show. */
     float level = 1f;
+    /** Draws a slash across the icon: switched off, or not connected. */
+    boolean off;
 
     Icon(int kind, int size, int color) {
         this.kind = kind;
@@ -60,6 +62,18 @@ final class Icon extends Drawable {
                     c.drawArc(r, -50, 100, false, p);
                 }
             }
+        } else if (kind == WIFI) {
+            // Wi-Fi: three arcs fanning up from a dot.
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeWidth(Math.max(1.5f, 0.09f * s));
+            p.setStrokeCap(Paint.Cap.ROUND);
+            float cx = x + 0.5f * s, cy = y + 0.82f * s;
+            for (float rad : new float[] {0.24f, 0.46f, 0.68f}) {
+                r.set(cx - rad * s, cy - rad * s, cx + rad * s, cy + rad * s);
+                c.drawArc(r, -135, 90, false, p);
+            }
+            p.setStyle(Paint.Style.FILL);
+            c.drawCircle(cx, cy, 0.07f * s, p);
         } else if (kind == BLUETOOTH) {
             // The Bluetooth rune: one stroke through six points.
             p.setStyle(Paint.Style.STROKE);
@@ -149,6 +163,15 @@ final class Icon extends Drawable {
             p.setStyle(Paint.Style.FILL);
             c.drawRect(x + 0.42f * s, y + 0.15f * s, x + 0.47f * s, y + 0.22f * s, p);
             c.drawRect(x + 0.53f * s, y + 0.15f * s, x + 0.58f * s, y + 0.22f * s, p);
+        }
+        if (off) {
+            int keep = p.getColor();
+            p.setStyle(Paint.Style.STROKE);
+            p.setStrokeCap(Paint.Cap.ROUND);
+            p.setStrokeWidth(Math.max(2f, 0.10f * s));
+            p.setColor(0xFFFF6B6B);
+            c.drawLine(x + 0.12f * s, y + 0.12f * s, x + 0.88f * s, y + 0.88f * s, p);
+            p.setColor(keep);
         }
     }
 

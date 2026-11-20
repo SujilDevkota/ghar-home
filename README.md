@@ -17,7 +17,8 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
 - **Weather.** Temperature and conditions for a city you choose (Kathmandu to start with), with a soft sun,
   moon, cloud, rain or snow drawn behind it.
 - **Volume, USB, Bluetooth.** The volume level, a USB button while a drive is plugged in, and icons for
-  Bluetooth and for a speaker or headphones on the audio socket (where the TV can tell), under the header.
+  Wi-Fi (connected or not), Bluetooth (on or off) and a speaker or headphones on the audio socket, each
+  shown only where the TV has it and can tell.
 - **Nepali TV.** A row of Nepali broadcasters' own official YouTube channels, opened in SmartTube: the live
   stream when the channel is on air (a red dot marks those), its programmes otherwise. Nothing is rebroadcast.
 - **TV inputs** (experimental). On TVs with an MStar board, buttons for TV, HDMI 1-3 and AV.

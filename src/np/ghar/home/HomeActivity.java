@@ -80,7 +80,6 @@ public class HomeActivity extends Activity {
     private static final String KEY_HIDDEN = "hidden";
     private static final String KEY_USES = "uses";
     private static final String KEY_SOUND = "sound";
-    private static final String KEY_SPEAKER = "external_speaker";
     static final String KEY_THEME = "theme";
     private static final String KEY_LANG = "lang";
     private static final String KEY_CLUTTER = "clutter_hidden";
@@ -139,7 +138,8 @@ public class HomeActivity extends Activity {
     private boolean weatherBusy;
     private WeatherArt art;
     private Icon volumeIcon;
-    private ImageView bluetoothIcon, wiredIcon;
+    private ImageView bluetoothIcon, wiredIcon, wifiView;
+    private Icon btIcon, wifiIcon;
     private TextView[] channelTiles;
     private final String[] liveVideo = new String[Channels.NAMES.length];   // the live stream of each channel, when it has one
     private long liveChecked;
@@ -484,8 +484,16 @@ public class HomeActivity extends Activity {
         ((LinearLayout.LayoutParams) usbText.getLayoutParams()).rightMargin = 3 * u;
         status.addView(usbText);
         volumeText = text("", 2.3f, 0xCCFFFFFF);
+        wifiView = new ImageView(this);
+        wifiIcon = new Icon(Icon.WIFI, (int) (3.2f * u), 0xCCFFFFFF);
+        wifiView.setImageDrawable(wifiIcon);
+        wifiView.setVisibility(View.GONE);
+        LinearLayout.LayoutParams wifiAt = new LinearLayout.LayoutParams((int) (3.2f * u), (int) (3.2f * u));
+        wifiAt.rightMargin = 2 * u;
+        status.addView(wifiView, wifiAt);
         bluetoothIcon = new ImageView(this);
-        bluetoothIcon.setImageDrawable(new Icon(Icon.BLUETOOTH, (int) (3.2f * u), 0xFF7FB2FF));
+        btIcon = new Icon(Icon.BLUETOOTH, (int) (3.2f * u), 0xFF7FB2FF);
+        bluetoothIcon.setImageDrawable(btIcon);
         bluetoothIcon.setVisibility(View.GONE);
         LinearLayout.LayoutParams iconAt = new LinearLayout.LayoutParams((int) (3.2f * u), (int) (3.2f * u));
         iconAt.rightMargin = 2 * u;
@@ -649,11 +657,10 @@ public class HomeActivity extends Activity {
         recreate();
     }
 
-    /** Wallpaper, sounds and the external-speaker mark in one menu, so the footer stays short. */
+    /** Wallpaper and sounds in one menu, so the footer stays short. */
     private void showOptions() {
-        final boolean sound = prefs.getBoolean(KEY_SOUND, true), speaker = prefs.getBoolean(KEY_SPEAKER, false);
-        String[] names = {T.t("Wallpaper"), T.t(sound ? "Sound: on" : "Sound: off"),
-                T.t(speaker ? "External speaker: yes" : "External speaker: no")};
+        final boolean sound = prefs.getBoolean(KEY_SOUND, true);
+        String[] names = {T.t("Wallpaper"), T.t(sound ? "Sound: on" : "Sound: off")};
         new AlertDialog.Builder(this).setTitle(T.t("Options"))
                 .setItems(names, new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
@@ -661,14 +668,8 @@ public class HomeActivity extends Activity {
                             showWallpapers();
                             return;
                         }
-                        if (which == 1) {
-                            prefs.edit().putBoolean(KEY_SOUND, !sound).apply();
-                            tick();
-                        } else {
-                            // Most TVs can't tell when a speaker is on the audio socket, so the owner says so here.
-                            prefs.edit().putBoolean(KEY_SPEAKER, !speaker).apply();
-                            showVolume();
-                        }
+                        prefs.edit().putBoolean(KEY_SOUND, !sound).apply();
+                        tick();
                         showOptions();      // shown again with the new state, so the change is seen
                     }
                 }).show();
@@ -936,7 +937,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.16" : T.t("No internet") + "   \u2022   Ghar Home 0.16");
+        net.setText(online ? "Ghar Home 0.17" : T.t("No internet") + "   \u2022   Ghar Home 0.17");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
@@ -947,15 +948,35 @@ public class HomeActivity extends Activity {
     /** The volume, redrawn only when it has changed. Asked every second: this TV doesn't announce changes. */
     private void showVolume() {
         if (volumeText == null) return;
-        // Bluetooth switched on, and a speaker or headphones on the audio socket (where the TV can tell).
-        boolean bluetooth = false, wired = false;
+        // Each icon shows only for what the TV has and can tell: nothing here is set by hand.
+        // Wi-Fi: on TVs with Wi-Fi, plain when connected and crossed when not.
+        try {
+            if (getPackageManager().hasSystemFeature(PackageManager.FEATURE_WIFI)) {
+                NetworkInfo wifi = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getNetworkInfo(ConnectivityManager.TYPE_WIFI);
+                boolean off = wifi == null || !wifi.isConnected();
+                if (wifiIcon.off != off || wifiView.getVisibility() != View.VISIBLE) {
+                    wifiIcon.off = off;
+                    wifiView.setVisibility(View.VISIBLE);
+                    wifiView.invalidate();
+                }
+            }
+        } catch (Throwable ignored) { }
+        // Bluetooth: on TVs with Bluetooth, plain when switched on and crossed when off.
         try {
             BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();
-            bluetooth = bt != null && bt.isEnabled();
+            if (bt != null) {
+                boolean off = !bt.isEnabled();
+                if (btIcon.off != off || bluetoothIcon.getVisibility() != View.VISIBLE) {
+                    btIcon.off = off;
+                    bluetoothIcon.setVisibility(View.VISIBLE);
+                    bluetoothIcon.invalidate();
+                }
+            }
         } catch (Throwable ignored) { }
+        // A speaker or headphones on the audio socket: only where the TV detects the plug.
+        boolean wired = false;
         try { wired = ((AudioManager) getSystemService(AUDIO_SERVICE)).isWiredHeadsetOn(); } catch (Throwable ignored) { }
-        bluetoothIcon.setVisibility(bluetooth ? View.VISIBLE : View.GONE);
-        wiredIcon.setVisibility(wired || prefs.getBoolean(KEY_SPEAKER, false) ? View.VISIBLE : View.GONE);
+        wiredIcon.setVisibility(wired ? View.VISIBLE : View.GONE);
         try {
             AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
             int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), now = am.getStreamVolume(AudioManager.STREAM_MUSIC);
