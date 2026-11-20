@@ -11,10 +11,13 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
 ## What it does
 
 - **Clock and dates.** The time, the English date and the Bikram Sambat date, with the next Nepali festival.
-- **Patro.** A Nepali calendar, one month at a time, with English dates, Saturdays and festivals marked.
+- **Patro.** A Nepali calendar, one month at a time, with English dates, the tithi of every day, Saturdays
+  and festivals marked.
   Open it from the date under the clock or from *Patro* in the footer.
 - **Weather.** Temperature and conditions for a city you choose (Kathmandu to start with), with a soft sun,
   moon, cloud, rain or snow drawn behind it.
+- **Volume and USB.** The volume level and whether a USB drive is plugged in, under the header.
+- **TV inputs** (experimental). On TVs with an MStar board, buttons for TV, HDMI 1-3 and AV.
 - **Favourites.** A row of large tiles for the apps you pick, in your order.
 - **All apps, most used first.** Apps you open often rise to the top.
 - **Wallpapers.** Seven hand-picked backgrounds, or a photo sent from your phone.
@@ -143,6 +146,9 @@ Everything has to run on Android 4.4 (API 19), so the code avoids anything newer
 Bikram Sambat months have no formula. Each year's month lengths come from the published calendar, and lunar
 festivals move every year. `NepaliDate.java` holds both as small tables:
 
+- **Tithi** is calculated from the positions of the sun and moon at sunrise in Kathmandu
+  ([`Tithi.java`](src/np/ghar/home/Tithi.java)). On a day when the tithi changes right at sunrise it can differ
+  from a printed patro.
 - **2083 BS** was checked against the government's public holiday list.
 - **2084 BS** is the commonly published prediction and still has to be checked.
 - The festival list runs to Nepali New Year 2084.

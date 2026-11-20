@@ -51,6 +51,7 @@ final class T {
                 "The Home button opens Ghar Home", "Home बटनले घर होम खोल्छ",
                 "on", "खुला", "off", "बन्द", "choose keyboard", "किबोर्ड छान्नुहोस्",
                 "This TV's settings have no such screen", "यो टिभीको सेटिङमा त्यो स्क्रिन छैन",
+                "Volume", "आवाज", "USB connected", "USB जोडिएको",
                 "Sunny", "घमाइलो", "Clear", "सफा", "Mostly sunny", "प्रायः घमाइलो", "Mostly clear", "प्रायः सफा",
                 "Partly cloudy", "आंशिक बदली", "Cloudy", "बदली", "Fog", "हुस्सु", "Drizzle", "सिमसिम पानी",
                 "Rain", "वर्षा", "Snow", "हिउँ", "Showers", "झरी", "Snow showers", "हिमपात", "Thunderstorm", "चट्याङसहित वर्षा",

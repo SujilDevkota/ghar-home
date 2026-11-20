@@ -66,6 +66,12 @@ final class PatroView extends View {
         text(c, title, side, top + 5f * u, 6f, 0xFFFFFFFF, Paint.Align.LEFT, false);
         String range = NepaliDate.AD_MONTHS[a[1] - 1] + (a[0] != b[0] ? " " + a[0] : "") + " – " + NepaliDate.AD_MONTHS[b[1] - 1] + " " + b[0];
         text(c, range, side, top + 9f * u, 2.6f, 0xB3FFFFFF, Paint.Align.LEFT, false);
+        int[] now = NepaliDate.bs(today);
+        if (now != null) {
+            String day = ne ? NepaliDate.MONTHS_NE[now[1]] + " " + T.num("" + now[2]) : NepaliDate.MONTHS[now[1]] + " " + now[2];
+            text(c, (ne ? "आज: " : "Today: ") + day + "   \u2022   " + Tithi.name(today, ne), w - side, top + 5f * u, 2.8f, 0xFFFFD27A, Paint.Align.RIGHT, false);
+            text(c, ne ? "तिथि: काठमाडौंको सूर्योदयमा, गणना गरिएको" : "Tithi: at sunrise in Kathmandu, calculated", w - side, top + 9f * u, 2.0f, 0x80FFFFFF, Paint.Align.RIGHT, false);
+        }
 
         // The grid takes the left two thirds; the month's festivals go on the right.
         float gridW = w * 0.60f, cellW = gridW / 7f, gridTop = top + 13f * u;
@@ -86,7 +92,10 @@ final class PatroView extends View {
             p.setColor(n == today ? 0xFF2F6BFF : 0x12FFFFFF);
             c.drawRoundRect(box, u, u, p);
             int color = n == today ? 0xFFFFFFFF : festival != null ? 0xFFFFD27A : col == 6 ? 0xFFFF8A80 : 0xFFFFFFFF;
-            text(c, T.num("" + d), x + cellW * 0.5f, y + cellH * 0.62f, 3.6f, color, Paint.Align.CENTER, false);
+            text(c, T.num("" + d), x + cellW * 0.5f, y + cellH * 0.52f, 3.4f, color, Paint.Align.CENTER, false);
+            int ti = Tithi.index(n);
+            text(c, Tithi.brief(n, ne), x + u * 1.1f, y + cellH - u * 1.0f, 1.55f,
+                    ti == 14 || ti == 29 ? 0xFFFFD27A : n == today ? 0xE6FFFFFF : 0x99FFFFFF, Paint.Align.LEFT, false);
             text(c, "" + NepaliDate.english(n)[2], x + cellW - u * 1.1f, y + cellH - u * 1.0f, 1.7f, 0x99FFFFFF, Paint.Align.RIGHT, false);
             if (festival != null) {
                 text(c, T.num("" + d) + "   " + festival, listX, listY + 3.4f * u, 2.7f, 0xFFFFD27A, Paint.Align.LEFT, false);

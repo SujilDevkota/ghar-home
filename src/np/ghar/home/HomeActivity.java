@@ -144,7 +144,7 @@ public class HomeActivity extends Activity {
     private ScrollView scroll;
     private LinearLayout favRow;
     private LinearLayout grid;
-    private TextView clock, date, net, bs, weatherBig, weatherSmall;
+    private TextView clock, date, net, bs, weatherBig, weatherSmall, usbText, volumeText;
     private String focusPkg;
     private boolean focusInFavs = true;
     private boolean loading;
@@ -160,6 +160,13 @@ public class HomeActivity extends Activity {
     private final Runnable settled = new Runnable() {
         @Override public void run() {
             prefs.edit().putInt(KEY_CRASHES, 0).apply();
+        }
+    };
+
+    private final BroadcastReceiver plugged = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            showStatus();
+            handler.postDelayed(new Runnable() { @Override public void run() { showStatus(); } }, 1500);   // a disk takes a moment
         }
     };
 
@@ -197,6 +204,16 @@ public class HomeActivity extends Activity {
             f.addAction(Intent.ACTION_PACKAGE_CHANGED);
             f.addDataScheme("package");
             registerReceiver(packages, f);
+            // Volume keys and a USB drive going in or out change the status row at once.
+            registerReceiver(plugged, new IntentFilter("android.media.VOLUME_CHANGED_ACTION"));
+            IntentFilter disks = new IntentFilter();
+            disks.addAction(Intent.ACTION_MEDIA_MOUNTED);
+            disks.addAction(Intent.ACTION_MEDIA_UNMOUNTED);
+            disks.addAction(Intent.ACTION_MEDIA_EJECT);
+            disks.addAction(Intent.ACTION_MEDIA_REMOVED);
+            disks.addAction(Intent.ACTION_MEDIA_BAD_REMOVAL);
+            disks.addDataScheme("file");
+            registerReceiver(plugged, disks);
             loadApps();
         } catch (Throwable t) {
             showSafeScreen();
@@ -213,6 +230,7 @@ public class HomeActivity extends Activity {
             fill();
         }
         lastMinute = -1;
+        showStatus();
         handler.removeCallbacks(tick);
         handler.post(tick);
         handler.removeCallbacks(settled);
@@ -229,6 +247,7 @@ public class HomeActivity extends Activity {
     @Override protected void onDestroy() {
         super.onDestroy();
         try { unregisterReceiver(packages); } catch (Exception ignored) { }
+        try { unregisterReceiver(plugged); } catch (Exception ignored) { }
         try { if (tickSound != null) tickSound.release(); } catch (Exception ignored) { }
         try { if (chimeSound != null) chimeSound.release(); } catch (Exception ignored) { }
     }
@@ -402,6 +421,31 @@ public class HomeActivity extends Activity {
         right.addView(weatherSmall);
         header.addView(right);
         page.addView(header);
+
+        // Status row: the TV's own inputs on the left; what is plugged in and the volume on the right.
+        LinearLayout status = new LinearLayout(this);
+        status.setPadding(side - u / 2, 2 * u, side, 0);
+        status.setGravity(Gravity.CENTER_VERTICAL);
+        status.setClipChildren(false);
+        if (TvInput.available(this)) {
+            for (int i = 0; i < TvInput.NAMES.length; i++) {
+                final int input = i;
+                status.addView(pill(TvInput.NAMES[i], new Runnable() {
+                    @Override public void run() {
+                        String problem = TvInput.show(HomeActivity.this, input);
+                        if (problem != null) Toast.makeText(HomeActivity.this, problem, Toast.LENGTH_LONG).show();
+                    }
+                }));
+            }
+        }
+        View gap = new View(this);
+        status.addView(gap, new LinearLayout.LayoutParams(0, 1, 1f));
+        usbText = text("", 2.3f, 0xFF9FE8C0);
+        usbText.setPadding(0, 0, 3 * u, 0);
+        status.addView(usbText);
+        volumeText = text("", 2.3f, 0xCCFFFFFF);
+        status.addView(volumeText);
+        page.addView(status);
 
         page.addView(sectionTitle(T.t("Favourites"), side));
         HorizontalScrollView hs = new HorizontalScrollView(this);
@@ -797,10 +841,24 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.7" : T.t("No internet") + "   \u2022   Ghar Home 0.7");
+        net.setText(online ? "Ghar Home 0.8" : T.t("No internet") + "   \u2022   Ghar Home 0.8");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
+        showStatus();
         if (online) refreshWeather(false);
+    }
+
+    /** The volume and whether a USB drive is in. */
+    private void showStatus() {
+        if (volumeText == null) return;
+        try {
+            AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
+            int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), now = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+            volumeText.setText(max <= 0 ? "" : T.t("Volume") + " " + T.num("" + Math.round(now * 100f / max)) + "%");
+        } catch (Throwable t) {
+            volumeText.setText("");
+        }
+        usbText.setText(TvInput.usb() ? T.t("USB connected") : "");
     }
 
     // ---------------------------------------------------------------- sound

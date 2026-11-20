@@ -199,7 +199,7 @@ public class LinkService extends Service {
         }
 
         if (path.equals("/api/info")) {
-            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"themes\":[");
+            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.8\",\"themes\":[");
             for (int i = 0; i < HomeActivity.THEME_NAMES.length; i++) {
                 b.append(i > 0 ? "," : "").append('"').append(esc(HomeActivity.THEME_NAMES[i])).append('"');
             }
@@ -227,6 +227,16 @@ public class LinkService extends Service {
                 home.runOnUiThread(new Runnable() { @Override public void run() { home.refreshWeather(true); } });
             }
             json(out, 200, found == null ? "City not found" : "Weather set to " + found);
+        } else if (path.equals("/api/report")) {
+            reply(out, 200, "text/plain; charset=utf-8", TvInput.report(this).getBytes("UTF-8"));
+        } else if (path.equals("/api/source")) {
+            int i = -1;
+            try { i = Integer.parseInt(query.get("i")); } catch (Exception ignored) { }
+            if (i < 0 || i >= TvInput.NAMES.length) json(out, 200, "No such input");
+            else {
+                String problem = TvInput.show(this, i);
+                json(out, 200, problem == null ? TvInput.NAMES[i] : problem);
+            }
         } else if (path.equals("/api/type")) {
             json(out, 200, type(query.get("q"), query.get("k")));
         } else if (path.equals("/api/theme")) {
