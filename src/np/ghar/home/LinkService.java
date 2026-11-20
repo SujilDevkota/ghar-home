@@ -199,10 +199,10 @@ public class LinkService extends Service {
         }
 
         if (path.equals("/api/info")) {
-            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.9\",\"inputs\":[");
+            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.10\",\"inputs\":[");
             int[] inputs = TvInput.inputs();
             for (int i = 0; i < inputs.length; i++) {
-                b.append(i > 0 ? "," : "").append("{\"i\":").append(inputs[i]).append(",\"name\":\"").append(TvInput.NAMES[inputs[i]])
+                b.append(i > 0 ? "," : "").append("{\"i\":").append(inputs[i]).append(",\"name\":\"").append(esc(TvInput.name(this, inputs[i])))
                         .append("\",\"live\":").append(TvInput.live(inputs[i])).append('}');
             }
             b.append("],\"themes\":[");
@@ -241,7 +241,19 @@ public class LinkService extends Service {
             if (i < 0 || i >= TvInput.NAMES.length) json(out, 200, "No such input");
             else {
                 String problem = TvInput.show(this, i);
-                json(out, 200, problem == null ? TvInput.NAMES[i] : problem);
+                json(out, 200, problem == null ? TvInput.name(this, i) : problem);
+            }
+        } else if (path.equals("/api/inputname")) {
+            // A name for an input, such as "Caro TV" for the HDMI the set-top box is on. Empty goes back to the TV's name.
+            int i = -1;
+            try { i = Integer.parseInt(query.get("i")); } catch (Exception ignored) { }
+            String name = query.get("name") == null ? "" : query.get("name").replaceAll("[\\p{Cntrl}<>\"]", "").trim();
+            if (i < 0 || i >= TvInput.NAMES.length || name.length() > 16) json(out, 200, "Give an input and a name up to 16 letters");
+            else {
+                getSharedPreferences("ghar", MODE_PRIVATE).edit().putString("input_name_" + i, name).commit();
+                final HomeActivity home = HomeActivity.showing;
+                if (home != null) home.runOnUiThread(new Runnable() { @Override public void run() { home.recreate(); } });
+                json(out, 200, name.length() == 0 ? TvInput.NAMES[i] : TvInput.NAMES[i] + " is now " + name);
             }
         } else if (path.equals("/api/type")) {
             json(out, 200, type(query.get("q"), query.get("k")));

@@ -60,6 +60,12 @@ final class TvInput {
         }
     }
 
+    /** The name shown for an input: the one the user gave it ("Caro TV"), or the TV's. */
+    static String name(Context c, int i) {
+        String own = c.getSharedPreferences("ghar", Context.MODE_PRIVATE).getString("input_name_" + i, "");
+        return own.length() > 0 ? own : NAMES[i];
+    }
+
     /** Whether something is plugged into an input and sending a picture, where the TV can tell. */
     static boolean live(int i) {
         try {

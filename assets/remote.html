@@ -51,7 +51,8 @@ small{color:#8fa3c8;display:block;margin-top:8px;line-height:1.45;font-size:13px
 </div>
 <div class="keys"><button onclick="key('back')">Back</button><button onclick="key('home')">Home</button><button onclick="key('menu')">Menu</button></div>
 
-<div id="inputsBox" style="display:none"><h2>TV inputs</h2><div id="inputs" class="keys" style="margin-bottom:0"></div></div>
+<div id="inputsBox" style="display:none"><h2>TV inputs</h2><div id="inputs" class="keys" style="margin-bottom:0"></div>
+<small>A dot marks an input with something switched on. Hold a button to rename it.</small></div>
 
 <h2>Type on the TV</h2>
 <form onsubmit="typeText();return false"><input type="text" id="t" placeholder="Text for the box open on the TV" autocomplete="off"><button>Send</button></form>
@@ -100,7 +101,13 @@ function load(){api('info',function(r){
     b.onclick=function(){api('open?pkg='+encodeURIComponent(a.pkg))};box.appendChild(b)});
   var ib=document.getElementById('inputs');ib.innerHTML='';
   (r.inputs||[]).forEach(function(s){var b=document.createElement('button');b.textContent=s.name+(s.live?' \u2022':'');
-    b.onclick=function(){api('source?i='+s.i)};ib.appendChild(b)});
+    var held=false,timer;
+    b.onclick=function(){if(!held)api('source?i='+s.i);held=false};
+    b.ontouchstart=function(){held=false;timer=setTimeout(function(){held=true;var n=prompt('Name for '+s.name+' (empty to reset)',s.name);
+      if(n!==null)api('inputname?i='+s.i+'&name='+encodeURIComponent(n),load)},650)};
+    b.ontouchend=b.ontouchmove=function(){clearTimeout(timer)};
+    b.oncontextmenu=function(e){e.preventDefault()};
+    ib.appendChild(b)});
   document.getElementById('inputsBox').style.display=(r.inputs||[]).length?'block':'none';
   var t=document.getElementById('themes');t.innerHTML='';
   (r.themes||[]).forEach(function(n,i){var b=document.createElement('button');b.className='sw'+(r.theme===i?' sel':'');

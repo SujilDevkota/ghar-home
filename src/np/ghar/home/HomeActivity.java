@@ -133,6 +133,8 @@ public class HomeActivity extends Activity {
     private boolean usesChanged;
     private boolean weatherBusy;
     private WeatherArt art;
+    private Icon volumeIcon;
+    private int shownVolume = -1;
     private boolean quiet;
     private AudioTrack tickSound, chimeSound;
     private FrameLayout root;
@@ -153,6 +155,7 @@ public class HomeActivity extends Activity {
     private final Runnable tick = new Runnable() {
         @Override public void run() {
             updateClock();
+            showVolume();
             handler.postDelayed(this, 1000);
         }
     };
@@ -430,7 +433,7 @@ public class HomeActivity extends Activity {
         try {
             for (final int input : TvInput.inputs()) {
                 // A dot marks an input with something plugged in and switched on, such as a set-top box.
-                status.addView(pill(TvInput.NAMES[input] + (TvInput.live(input) ? "  \u2022" : ""), new Runnable() {
+                status.addView(pill(TvInput.name(this, input) + (TvInput.live(input) ? "  \u2022" : ""), new Runnable() {
                     @Override public void run() {
                         String problem = TvInput.show(HomeActivity.this, input);
                         if (problem != null) Toast.makeText(HomeActivity.this, problem, Toast.LENGTH_LONG).show();
@@ -440,7 +443,7 @@ public class HomeActivity extends Activity {
         } catch (Throwable ignored) { }      // a TV whose inputs this app can't reach: no buttons
         View gap = new View(this);
         status.addView(gap, new LinearLayout.LayoutParams(0, 1, 1f));
-        usbText = (TextView) pill("USB connected", new Runnable() {
+        usbText = (TextView) pill("USB", new Runnable() {
             @Override public void run() {
                 // The TV's own file manager, where it has one; otherwise there is nothing to open.
                 for (String pkg : new String[] {"com.cultraview.newfilemanager", "com.android.documentsui"}) {
@@ -454,10 +457,16 @@ public class HomeActivity extends Activity {
             }
         });
         usbText.setTextColor(0xFF9FE8C0);
+        usbText.setCompoundDrawablesWithIntrinsicBounds(new Icon(Icon.USB, (int) (3.2f * u), 0xFF9FE8C0), null, null, null);
+        usbText.setCompoundDrawablePadding(u);
         usbText.setVisibility(View.GONE);
         ((LinearLayout.LayoutParams) usbText.getLayoutParams()).rightMargin = 3 * u;
         status.addView(usbText);
         volumeText = text("", 2.3f, 0xCCFFFFFF);
+        volumeIcon = new Icon(Icon.SPEAKER, (int) (3.4f * u), 0xCCFFFFFF);
+        volumeText.setCompoundDrawablesWithIntrinsicBounds(volumeIcon, null, null, null);
+        volumeText.setCompoundDrawablePadding(u);
+        volumeText.setGravity(Gravity.CENTER_VERTICAL);
         status.addView(volumeText);
         page.addView(status);
 
@@ -855,23 +864,35 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.9" : T.t("No internet") + "   \u2022   Ghar Home 0.9");
+        net.setText(online ? "Ghar Home 0.10" : T.t("No internet") + "   \u2022   Ghar Home 0.10");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
         if (online) refreshWeather(false);
     }
 
-    /** The volume and whether a USB drive is in. */
-    private void showStatus() {
+    /** The volume, redrawn only when it has changed. Asked every second: this TV doesn't announce changes. */
+    private void showVolume() {
         if (volumeText == null) return;
         try {
             AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
             int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), now = am.getStreamVolume(AudioManager.STREAM_MUSIC);
-            volumeText.setText(max <= 0 ? "" : T.t("Volume") + " " + T.num("" + Math.round(now * 100f / max)) + "%");
+            int percent = max <= 0 ? 0 : Math.round(now * 100f / max);
+            if (percent == shownVolume) return;
+            shownVolume = percent;
+            volumeIcon.level = percent / 100f;
+            volumeIcon.invalidateSelf();
+            volumeText.setText(T.num("" + percent) + "%");
+            volumeText.invalidate();
         } catch (Throwable t) {
             volumeText.setText("");
         }
+    }
+
+    /** The volume and whether a USB drive is in. */
+    private void showStatus() {
+        if (volumeText == null) return;
+        showVolume();
         usbText.setVisibility(TvInput.usb() ? View.VISIBLE : View.GONE);
     }
 
