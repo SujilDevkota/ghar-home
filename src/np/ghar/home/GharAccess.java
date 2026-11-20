@@ -30,13 +30,13 @@ public class GharAccess extends AccessibilityService {
         super.onDestroy();
     }
 
-    /** Set when the user asks for the TV's own home screen, so it is left alone until Ghar Home shows again. */
+    /** Set when the user asks for the TV's own home screen, so it is left alone until TV Ghar shows again. */
     static volatile boolean letOriginal;
     private java.util.HashSet<String> homes;
 
     /**
      * Some TVs never ask which home screen to use, and the Home button keeps opening the maker's.
-     * When that one comes to the front, Ghar Home takes its place: the Home button then lands here.
+     * When that one comes to the front, TV Ghar takes its place: the Home button then lands here.
      */
     @Override public void onAccessibilityEvent(AccessibilityEvent event) {
         try {
@@ -54,7 +54,7 @@ public class GharAccess extends AccessibilityService {
                 }
             }
             if (!homes.contains(pkg)) return;
-            // After a crash the original home screen is the way out: leave it be until Ghar Home has run well again.
+            // After a crash the original home screen is the way out: leave it be until TV Ghar has run well again.
             if (getSharedPreferences("ghar", MODE_PRIVATE).getInt("crashes", 0) > 0) return;
             startActivity(new Intent(this, HomeActivity.class).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
         } catch (Throwable ignored) { }

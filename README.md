@@ -1,18 +1,18 @@
 <img src="logo.png" width="96" alt="">
 
-# Ghar Home
+# TV Ghar
 
 A clean home screen for old Android TVs, with the Nepali date, festivals, weather and a phone remote.
 
 Many budget smart TVs still run Android 4.4 to 7 and will never get an update. Their home screens are
-cluttered and their built-in YouTube app no longer works. Ghar Home replaces the home screen with a simple
+cluttered and their built-in YouTube app no longer works. TV Ghar replaces the home screen with a simple
 one that is driven entirely by the TV remote. It needs no root and removes nothing from the TV.
 
-*Ghar* (घर) means home.
+*Ghar* (घर) means home: a home for your TV.
 
-<img src="docs/tv-screenshot.jpg" width="880" alt="Ghar Home on a TV: the clock with the Nepali date, TV input buttons, weather, favourites and a row of Nepali TV channels">
+<img src="docs/tv-screenshot.jpg" width="880" alt="TV Ghar on a TV: the clock with the Nepali date, TV input buttons, weather, favourites and a row of Nepali TV channels">
 
-<sub>Ghar Home in Nepali on a WEGA TV running Android 4.4.4.</sub>
+<sub>TV Ghar in Nepali on a WEGA TV running Android 4.4.4.</sub>
 
 ## What it does
 
@@ -46,12 +46,12 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
   handwriting mode of your phone's keyboard to speak or draw. Nothing is installed on the phone.
 - **Remote and typing inside other apps** (optional). Two switches under *Remote* let the phone move, select
   and go back in any app, and type into any text box. See [Reaching other apps](#reaching-other-apps).
-- **Starts with the TV.** Ghar Home opens when the TV has started, and can take the Home button on TVs that
+- **Starts with the TV.** TV Ghar opens when the TV has started, and can take the Home button on TVs that
   never ask which home screen to use.
 - **Install apps over Wi-Fi.** Send an APK from a computer and the TV's installer opens.
 - **Small sounds.** A chime when the home screen has loaded and a quiet tick when you move; *Options* turns
   them off.
-- **A way back.** *TV home* opens the TV's own home screen. If Ghar Home ever crashes, it hands the screen
+- **A way back.** *TV home* opens the TV's own home screen. If TV Ghar ever crashes, it hands the screen
   back to the original one by itself.
 
 ## What you need
@@ -65,21 +65,21 @@ Tested so far on one TV: a WEGA smart TV (Cultraview board, Android 4.4.4). Repo
 
 ## Install
 
-1. Build `GharHome.apk` (below), or take it from a release.
+1. Build `TVGhar.apk` (below), or take it from a release.
 2. Copy it to a USB stick and open it with the TV's file manager, or download it with the TV's browser.
-3. Choose **Install**, then open **Ghar Home** from the app list.
-4. Press **Home** on the remote. If the TV asks which home screen to use, pick Ghar Home. Choose
+3. Choose **Install**, then open **TV Ghar** from the app list.
+4. Press **Home** on the remote. If the TV asks which home screen to use, pick TV Ghar. Choose
    *Just once* until you are happy with it, then *Always*.
 
-Some TVs never ask and keep their own home screen on the Home button. Ghar Home then still works as an app.
+Some TVs never ask and keep their own home screen on the Home button. TV Ghar then still works as an app.
 
-To remove it, uninstall Ghar Home in the TV's settings. The original home screen was never changed.
+To remove it, uninstall TV Ghar in the TV's settings. The original home screen was never changed.
 
 ### YouTube on an old TV
 
 Google's YouTube app has stopped working on most of these TVs. [SmartTube](https://github.com/yuliskov/SmartTube)
 is an open-source YouTube app for TVs that still supports old Android. Download it only from its official
-GitHub releases. The first time Ghar Home sees SmartTube on the TV, it puts it first in Favourites. It also hides
+GitHub releases. The first time TV Ghar sees SmartTube on the TV, it puts it first in Favourites. It also hides
 Google's old YouTube app, once; *Hidden apps* brings it back.
 
 ## Using it
@@ -96,19 +96,19 @@ Google's old YouTube app, once; *Hidden apps* brings it back.
 Android does not let one app press keys or type inside another, but a keyboard may do both in the app it is
 attached to. *Remote* on the TV has the switch:
 
-- **Phone in other apps** opens the TV's keyboard settings. Turn on *Ghar Home keyboard* and choose it as the
+- **Phone in other apps** opens the TV's keyboard settings. Turn on *TV Ghar keyboard* and choose it as the
   keyboard in use. The phone's arrows, OK and Back then go to whichever app is in front, and text sent from
   the phone goes into the text box that is open. The same keyboard works with the TV remote.
-- On TVs that have an accessibility settings screen, *Ghar Home remote* can be turned on there as well; it is
+- On TVs that have an accessibility settings screen, *TV Ghar remote* can be turned on there as well; it is
   used first when it is on. Many old TVs have no such screen, and the keyboard alone is enough.
 
 Apps that draw their own screen (games, some video players) may not respond to the arrows.
 
 ### The Home button
 
-Some TVs never ask which home screen to use. On Android 4.4, Ghar Home then watches for the maker's home
-screen and takes its place, so the Home button and the TV's start both land on Ghar Home. *TV home* in the
-footer opens the original and leaves it alone until Ghar Home is opened again. *Home button opens Ghar Home*
+Some TVs never ask which home screen to use. On Android 4.4, TV Ghar then watches for the maker's home
+screen and takes its place, so the Home button and the TV's start both land on TV Ghar. *TV home* in the
+footer opens the original and leaves it alone until TV Ghar is opened again. *Home button opens TV Ghar*
 under *Remote* turns this off.
 
 ### Weather city
@@ -125,7 +125,7 @@ curl -X POST --data-binary @SomeApp.apk "http://TV_ADDRESS:8765/api/install?pin=
 ```
 
 The TV shows its normal install prompt, and someone presses **Install** with the remote. Android does not
-allow a silent install without root. Ghar Home has to be running on the TV.
+allow a silent install without root. TV Ghar has to be running on the TV.
 
 ## Build
 
@@ -153,7 +153,7 @@ update each other.
 | [`Qr.java`](src/np/ghar/home/Qr.java) | The QR code encoder |
 | [`GharAccess.java`](src/np/ghar/home/GharAccess.java) | The accessibility service: remote keys in other apps, and taking the Home button |
 | [`GharKeyboard.java`](src/np/ghar/home/GharKeyboard.java) | The TV keyboard that also takes text from the phone |
-| [`BootReceiver.java`](src/np/ghar/home/BootReceiver.java) | Starts Ghar Home when the TV starts |
+| [`BootReceiver.java`](src/np/ghar/home/BootReceiver.java) | Starts TV Ghar when the TV starts |
 | [`assets/remote.html`](assets/remote.html) | The phone remote page |
 
 Everything has to run on Android 4.4 (API 19), so the code avoids anything newer.
@@ -182,7 +182,7 @@ are welcome.
 - **The accessibility service is off until you turn it on.** It moves the focus, clicks and goes back when
   your phone sends a command with the PIN, and it watches which app comes to the front so it can replace the
   TV's own home screen. It does not read or store what is on screen.
-- **The TV runs a small web server on port 8765** while Ghar Home is running, for the phone remote and for
+- **The TV runs a small web server on port 8765** while TV Ghar is running, for the phone remote and for
   installs. Every action needs the 6-digit PIN made on that TV, and an install still has to be confirmed on
   the TV. It is plain http and meant for a home network: don't use it on Wi-Fi you don't trust.
 

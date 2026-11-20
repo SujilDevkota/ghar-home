@@ -106,7 +106,7 @@ public class LinkService extends Service {
 
     /**
      * Android 4.4 TVs that never ask which home screen to use: when the maker's one comes to the front,
-     * Ghar Home takes its place, so the Home button and the TV's start both land here.
+     * TV Ghar takes its place, so the Home button and the TV's start both land here.
      * Not while the user asked for the original ("TV home"), not after a crash, and not when switched off.
      */
     private void watchHome() {
@@ -199,7 +199,7 @@ public class LinkService extends Service {
         }
 
         if (path.equals("/api/info")) {
-            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.21\",\"inputs\":[");
+            StringBuilder b = new StringBuilder("{\"name\":\"TV Ghar\",\"version\":\"0.22\",\"inputs\":[");
             int[] inputs = TvInput.inputs();
             for (int i = 0; i < inputs.length; i++) {
                 b.append(i > 0 ? "," : "").append("{\"i\":").append(inputs[i]).append(",\"name\":\"").append(esc(TvInput.name(this, inputs[i])))
@@ -239,7 +239,7 @@ public class LinkService extends Service {
             reply(out, 200, "application/json", ("{\"typing\":" + (keyboard != null && keyboard.inputActive) + "}").getBytes("UTF-8"));
         } else if (path.equals("/api/screenshot")) {
             byte[] jpeg = screenshot();
-            if (jpeg == null) json(out, 200, "Ghar Home is not on screen");
+            if (jpeg == null) json(out, 200, "TV Ghar is not on screen");
             else reply(out, 200, "image/jpeg", jpeg);
         } else if (path.equals("/api/probe")) {
             reply(out, 200, "text/plain; charset=utf-8", Net.probe().getBytes("UTF-8"));
@@ -393,7 +393,7 @@ public class LinkService extends Service {
         else if ("home".equals(k)) { goHome(); return "Home"; }
         else return "Unknown key";
         try {
-            // Android lets an app press keys only in its own screens, so this works while Ghar Home shows.
+            // Android lets an app press keys only in its own screens, so this works while TV Ghar shows.
             new Instrumentation().sendKeyDownUpSync(code);
             return "";
         } catch (Throwable t) {
@@ -405,7 +405,7 @@ public class LinkService extends Service {
             if (access != null) return access.key(code) ? "" : "Nothing to do there";
             GharKeyboard keyboard = GharKeyboard.active;
             if (keyboard != null && keyboard.remoteKey(code)) return "";
-            return "To use the remote in other apps, choose the Ghar Home keyboard at Remote on the TV.";
+            return "To use the remote in other apps, choose the TV Ghar keyboard at Remote on the TV.";
         }
     }
 
@@ -453,7 +453,7 @@ public class LinkService extends Service {
     }
 
     /**
-     * What Ghar Home's own screen shows, as a JPEG. An app can only picture itself, so this is null while
+     * What TV Ghar's own screen shows, as a JPEG. An app can only picture itself, so this is null while
      * another app is in front, and popups (separate windows) are not in it.
      */
     private byte[] screenshot() {
@@ -517,7 +517,7 @@ public class LinkService extends Service {
         }
         GharAccess access = GharAccess.active;
         if (text != null && text.length() > 0 && access != null && access.type(text)) return "";
-        if (keyboard == null) return "To type from the phone, choose the Ghar Home keyboard at Remote on the TV.";
+        if (keyboard == null) return "To type from the phone, choose the TV Ghar keyboard at Remote on the TV.";
         return "Select a text box on the TV first.";
     }
 

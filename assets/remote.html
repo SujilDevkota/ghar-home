@@ -2,7 +2,7 @@
 <html><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no">
 <meta name="theme-color" content="#0b1220">
-<title>Ghar Home remote</title>
+<title>TV Ghar remote</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;background:linear-gradient(160deg,#0b1220,#111b33 55%,#0e2a3a);background-attachment:fixed;color:#fff;
@@ -50,7 +50,7 @@ small{color:#8fa3c8;display:block;margin-top:8px;line-height:1.45;font-size:13px
 <div class="keys"><button onclick="api('type?k=backspace')">Delete</button><button onclick="api('type?k=enter')">Enter</button><button onclick="hideTyping()">Hide</button></div>
 </div>
 <div class="wrap">
-<header><h1>Ghar Home</h1><span class="dot" id="dot"></span></header>
+<header><h1>TV Ghar</h1><span class="dot" id="dot"></span></header>
 <div id="msg"></div>
 <div class="pad">
 <button class="up" onclick="key('up')">&#9650;</button>
@@ -152,7 +152,7 @@ function load(){api('info',function(r){
   (r.themes||[]).forEach(function(n,i){var b=document.createElement('button');b.className='sw'+(r.theme===i?' sel':'');
     b.style.background=COLORS[i]||'#222';b.textContent=n;b.onclick=function(){theme(i)};t.appendChild(b)});
   document.getElementById('cityNow').textContent=r.city?'Now: '+r.city:'';
-  document.getElementById('reach').textContent=(r.keyboard||r.access)?'Works in other apps too.':'To use the remote and typing in other apps, choose the Ghar Home keyboard at Remote on the TV.';
+  document.getElementById('reach').textContent=(r.keyboard||r.access)?'Works in other apps too.':'To use the remote and typing in other apps, choose the TV Ghar keyboard at Remote on the TV.';
   msg('')})}
 load();
 watchTyping();

@@ -24,7 +24,7 @@ final class Net {
         HttpURLConnection c = (HttpURLConnection) new URL(address).openConnection();
         c.setConnectTimeout(10000);
         c.setReadTimeout(10000);
-        c.setRequestProperty("User-Agent", "GharHome");
+        c.setRequestProperty("User-Agent", "TVGhar");
         if (tls12 && c instanceof HttpsURLConnection) ((HttpsURLConnection) c).setSSLSocketFactory(new Tls12());
         return c;
     }

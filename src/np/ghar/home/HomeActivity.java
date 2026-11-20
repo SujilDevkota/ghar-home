@@ -69,7 +69,7 @@ import java.util.HashMap;
 import java.util.List;
 
 /**
- * Ghar Home: a small, clean home screen for old Android TVs (Android 4.4 and newer).
+ * TV Ghar: a small, clean home screen for old Android TVs (Android 4.4 and newer).
  * One Activity, plain Views built in code, no libraries. Everything here must exist on API 19.
  */
 public class HomeActivity extends Activity {
@@ -386,7 +386,7 @@ public class HomeActivity extends Activity {
         box.setOrientation(LinearLayout.VERTICAL);
         box.setGravity(Gravity.CENTER);
         box.setBackgroundColor(0xFF0B1220);
-        TextView t = text("Ghar Home had a problem.\nYou can open the TV's original home screen or Settings.", 3f, Color.WHITE);
+        TextView t = text("TV Ghar had a problem.\nYou can open the TV's original home screen or Settings.", 3f, Color.WHITE);
         t.setGravity(Gravity.CENTER);
         box.addView(t);
         LinearLayout row = new LinearLayout(this);
@@ -1108,7 +1108,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.21" : T.t("No internet") + "   \u2022   Ghar Home 0.21");
+        net.setText(online ? "TV Ghar 0.22" : T.t("No internet") + "   \u2022   TV Ghar 0.22");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
@@ -1394,7 +1394,7 @@ public class HomeActivity extends Activity {
         }
     }
 
-    /** Whether the Ghar Home keyboard is switched on in the TV's list of keyboards. */
+    /** Whether the TV Ghar keyboard is switched on in the TV's list of keyboards. */
     private boolean keyboardEnabled() {
         try {
             for (InputMethodInfo i : ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE)).getEnabledInputMethodList()) {
@@ -1459,11 +1459,11 @@ public class HomeActivity extends Activity {
         final AlertDialog[] dialog = new AlertDialog[1];
         final boolean enabled = keyboardEnabled(), chosen = keyboardChosen();
         final boolean take = prefs.getBoolean("take_home", true);
-        View access = pill(T.t("Home button opens Ghar Home") + ": " + T.t(take ? "on" : "off"), new Runnable() {
+        View access = pill(T.t("Home button opens TV Ghar") + ": " + T.t(take ? "on" : "off"), new Runnable() {
             @Override public void run() {
                 dialog[0].dismiss();
                 prefs.edit().putBoolean("take_home", !take).apply();
-                toast(take ? "The Home button opens the TV's own home screen" : "The Home button opens Ghar Home");
+                toast(take ? "The Home button opens the TV's own home screen" : "The Home button opens TV Ghar");
             }
         });
         View typing = pill(T.t("Phone in other apps") + ": " + T.t(chosen ? "on" : enabled ? "choose keyboard" : "off"), new Runnable() {

@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds GharHome.apk without Gradle: aapt2 -> javac -> d8 -> zipalign -> apksigner.
+# Builds TVGhar.apk without Gradle: aapt2 -> javac -> d8 -> zipalign -> apksigner.
 set -euo pipefail
 cd "$(dirname "$0")"
 SDK="${ANDROID_HOME:-$HOME/Library/Android/sdk}"
@@ -18,8 +18,8 @@ cp out/base.apk out/unsigned.apk
 # The signing key stays in this folder: updates must be signed with the same one.
 if [ ! -f gharhome.keystore ]; then
   keytool -genkeypair -keystore gharhome.keystore -storepass gharhome -keypass gharhome \
-    -alias ghar -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Ghar Home" >/dev/null 2>&1
+    -alias ghar -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=TV Ghar" >/dev/null 2>&1
 fi
 "$BT/apksigner" sign --ks gharhome.keystore --ks-pass pass:gharhome --key-pass pass:gharhome \
-  --min-sdk-version 19 --out GharHome.apk out/aligned.apk
-"$BT/apksigner" verify --min-sdk-version 19 GharHome.apk && ls -lh GharHome.apk
+  --min-sdk-version 19 --out TVGhar.apk out/aligned.apk
+"$BT/apksigner" verify --min-sdk-version 19 TVGhar.apk && ls -lh TVGhar.apk

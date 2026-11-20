@@ -4,7 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 
-/** When the TV has started: the link for the phone comes up, and Ghar Home takes the screen. */
+/** When the TV has started: the link for the phone comes up, and TV Ghar takes the screen. */
 public class BootReceiver extends BroadcastReceiver {
     @Override public void onReceive(Context c, Intent intent) {
         try { c.startService(new Intent(c, LinkService.class)); } catch (Exception ignored) { }

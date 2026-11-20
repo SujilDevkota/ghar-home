@@ -1,4 +1,4 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The keyboard has no settings of its own: "settings" opens Ghar Home, where its switch is. -->
+<!-- The keyboard has no settings of its own: "settings" opens TV Ghar, where its switch is. -->
 <input-method xmlns:android="http://schemas.android.com/apk/res/android"
     android:settingsActivity="np.ghar.home.HomeActivity" />

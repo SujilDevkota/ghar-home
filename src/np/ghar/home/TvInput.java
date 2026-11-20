@@ -219,9 +219,9 @@ final class TvInput {
             b.append("app memory class ").append(am.getMemoryClass()).append(" MB\n");
             android.os.Debug.MemoryInfo me = new android.os.Debug.MemoryInfo();
             android.os.Debug.getMemoryInfo(me);
-            b.append("Ghar Home uses ").append(me.getTotalPss() / 1024).append(" MB (java ").append(me.dalvikPss / 1024)
+            b.append("TV Ghar uses ").append(me.getTotalPss() / 1024).append(" MB (java ").append(me.dalvikPss / 1024)
                     .append(", native ").append(me.nativePss / 1024).append(", other ").append(me.otherPss / 1024).append(")\n");
-            b.append("Ghar Home in front = ").append(HomeActivity.showing != null).append('\n');
+            b.append("TV Ghar in front = ").append(HomeActivity.showing != null).append('\n');
         } catch (Throwable t) { b.append(cause(t)).append('\n'); }
 
         b.append("\n[audio outputs]\n");
