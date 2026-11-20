@@ -68,6 +68,11 @@ small{color:#8fa3c8;display:block;margin-top:8px;line-height:1.45;font-size:13px
 <h2>Apps on the TV</h2>
 <div id="apps"></div>
 
+<h2>Install an app on the TV</h2>
+<label class="photo">Choose an app file (APK) on this phone<input type="file" accept=".apk,application/vnd.android.package-archive" onchange="sendApp(this)"></label>
+<small>For old TVs that cannot download apps themselves. Get SmartTube on your phone from
+<a href="https://github.com/yuliskov/SmartTube/releases/latest" style="color:#9fd">its official page</a> (the file ending in armeabi-v7a.apk suits most TVs), then choose it here.</small>
+
 <h2>Wallpaper</h2>
 <div id="themes"></div>
 <label class="photo">Use a photo from this phone<input type="file" accept="image/*" onchange="photo(this)"></label>
@@ -99,6 +104,10 @@ function theme(i){api('theme?i='+i,load)}
 function photo(el){var f=el.files[0];if(!f)return;askPin();msg('Sending photo…');
   var x=new XMLHttpRequest();x.open('POST',url('wallpaper'));
   x.onload=function(){done(x,load)};x.onerror=function(){msg('Upload failed')};x.send(f);el.value=''}
+function sendApp(el){var f=el.files[0];if(!f)return;askPin();msg('Sending the app to the TV\u2026');
+  var x=new XMLHttpRequest();x.open('POST',url('install'));
+  x.upload.onprogress=function(e){if(e.lengthComputable)msg('Sending\u2026 '+Math.round(e.loaded*100/e.total)+'%')};
+  x.onload=function(){done(x)};x.onerror=function(){msg('Upload failed')};x.send(f);el.value=''}
 function load(){api('info',function(r){
   var box=document.getElementById('apps');box.innerHTML='';
   (r.apps||[]).forEach(function(a){var b=document.createElement('button');b.className='chip';b.textContent=a.label;

@@ -209,6 +209,18 @@ final class TvInput {
         } catch (Throwable t) { b.append(cause(t)).append('\n'); }
         b.append("usb() = ").append(usb()).append('\n');
 
+        b.append("\n[audio outputs]\n");
+        try {
+            AudioManager am = (AudioManager) c.getSystemService(Context.AUDIO_SERVICE);
+            b.append("wired headset on = ").append(am.isWiredHeadsetOn()).append('\n');
+            b.append("bluetooth a2dp on = ").append(am.isBluetoothA2dpOn()).append('\n');
+            b.append("speakerphone on = ").append(am.isSpeakerphoneOn()).append('\n');
+            android.content.Intent plug = c.registerReceiver(null, new android.content.IntentFilter(Intent.ACTION_HEADSET_PLUG));
+            b.append("headset plug = ").append(plug == null ? "never announced" : "state " + plug.getIntExtra("state", -1) + " name " + plug.getStringExtra("name")).append('\n');
+            android.bluetooth.BluetoothAdapter bt = android.bluetooth.BluetoothAdapter.getDefaultAdapter();
+            b.append("bluetooth = ").append(bt == null ? "none" : bt.isEnabled() ? "on" : "off").append('\n');
+        } catch (Throwable t) { b.append(cause(t)).append('\n'); }
+
         b.append("\n[volume]\n");
         try {
             AudioManager am = (AudioManager) c.getSystemService(Context.AUDIO_SERVICE);

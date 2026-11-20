@@ -16,12 +16,18 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
   Open it from the date under the clock or from *Patro* in the footer.
 - **Weather.** Temperature and conditions for a city you choose (Kathmandu to start with), with a soft sun,
   moon, cloud, rain or snow drawn behind it.
-- **Volume and USB.** The volume level and whether a USB drive is plugged in, under the header.
+- **Volume, USB, Bluetooth.** The volume level, a USB button while a drive is plugged in, and icons for
+  Bluetooth and for a speaker or headphones on the audio socket (where the TV can tell), under the header.
+- **Nepali TV.** A row of Nepali broadcasters' own official YouTube channels, opened in SmartTube: the live
+  stream when the channel is on air (a red dot marks those), its programmes otherwise. Nothing is rebroadcast.
 - **TV inputs** (experimental). On TVs with an MStar board, buttons for TV, HDMI 1-3 and AV.
 - **Favourites.** A row of large tiles for the apps you pick, in your order.
 - **All apps, most used first.** Apps you open often rise to the top.
-- **Wallpapers.** Seven hand-picked backgrounds, or a photo sent from your phone.
-- **English and Nepali.** Switch in the footer. Nepali is offered only on TVs that have a Devanagari font.
+- **Wallpapers.** Seven hand-picked backgrounds, or a photo sent from your phone (*Options* in the footer).
+- **English and Nepali.** The flag in the footer switches. Nepali is offered only on TVs that have a
+  Devanagari font.
+- **Install an app from the phone.** Old TVs can't download from today's secure sites, so the phone remote
+  can carry an app file to the TV.
 - **Apps screen.** *Apps* in the footer lists every app with buttons to make it a favourite, move it up or
   down, and hide or show it. System clutter is hidden on the first start.
 - **Send a link.** Paste a YouTube or web link on the phone remote and it opens on the TV (YouTube links in
@@ -35,8 +41,8 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
 - **Starts with the TV.** Ghar Home opens when the TV has started, and can take the Home button on TVs that
   never ask which home screen to use.
 - **Install apps over Wi-Fi.** Send an APK from a computer and the TV's installer opens.
-- **Small sounds.** A chime when the home screen has loaded and a quiet tick when you move; *Sound* in the
-  footer turns them off.
+- **Small sounds.** A chime when the home screen has loaded and a quiet tick when you move; *Options* turns
+  them off.
 - **A way back.** *TV home* opens the TV's own home screen. If Ghar Home ever crashes, it hands the screen
   back to the original one by itself.
 

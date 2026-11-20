@@ -6,6 +6,7 @@ import android.animation.PropertyValuesHolder;
 import android.animation.ValueAnimator;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.bluetooth.BluetoothAdapter;
 import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
@@ -137,6 +138,11 @@ public class HomeActivity extends Activity {
     private boolean weatherBusy;
     private WeatherArt art;
     private Icon volumeIcon;
+    private ImageView bluetoothIcon, wiredIcon;
+    private TextView[] channelTiles;
+    private final String[] liveVideo = new String[Channels.NAMES.length];   // the live stream of each channel, when it has one
+    private long liveChecked;
+    private boolean liveBusy;
     private int shownVolume = -1;
     private boolean quiet;
     private AudioTrack tickSound, chimeSound;
@@ -477,6 +483,18 @@ public class HomeActivity extends Activity {
         ((LinearLayout.LayoutParams) usbText.getLayoutParams()).rightMargin = 3 * u;
         status.addView(usbText);
         volumeText = text("", 2.3f, 0xCCFFFFFF);
+        bluetoothIcon = new ImageView(this);
+        bluetoothIcon.setImageDrawable(new Icon(Icon.BLUETOOTH, (int) (3.2f * u), 0xFF7FB2FF));
+        bluetoothIcon.setVisibility(View.GONE);
+        LinearLayout.LayoutParams iconAt = new LinearLayout.LayoutParams((int) (3.2f * u), (int) (3.2f * u));
+        iconAt.rightMargin = 2 * u;
+        status.addView(bluetoothIcon, iconAt);
+        wiredIcon = new ImageView(this);
+        wiredIcon.setImageDrawable(new Icon(Icon.WIRED, (int) (3.2f * u), 0xCCFFFFFF));
+        wiredIcon.setVisibility(View.GONE);
+        LinearLayout.LayoutParams wiredAt = new LinearLayout.LayoutParams((int) (3.2f * u), (int) (3.2f * u));
+        wiredAt.rightMargin = 2 * u;
+        status.addView(wiredIcon, wiredAt);
         volumeIcon = new Icon(Icon.SPEAKER, (int) (3.4f * u), 0xCCFFFFFF);
         volumeText.setCompoundDrawablesWithIntrinsicBounds(volumeIcon, null, null, null);
         volumeText.setCompoundDrawablePadding(u);
@@ -496,6 +514,38 @@ public class HomeActivity extends Activity {
         hs.addView(favRow, new HorizontalScrollView.LayoutParams(-2, -2));
         page.addView(hs, new LinearLayout.LayoutParams(-1, -2));
 
+        // Nepali TV: each broadcaster's own YouTube channel, live when it is streaming.
+        page.addView(sectionTitle(T.t("Nepali TV"), side));
+        HorizontalScrollView tv = new HorizontalScrollView(this);
+        tv.setHorizontalScrollBarEnabled(false);
+        tv.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        tv.setClipChildren(false);
+        LinearLayout tvRow = new LinearLayout(this);
+        tvRow.setPadding(side, 2 * u, side, 2 * u);
+        tvRow.setClipChildren(false);
+        tvRow.setClipToPadding(false);
+        channelTiles = new TextView[Channels.NAMES.length];
+        for (int i = 0; i < Channels.NAMES.length; i++) {
+            final int channel = i;
+            TextView t = text(Channels.NAMES[i], 2.5f, Color.WHITE);
+            t.setTypeface(Typeface.DEFAULT_BOLD);
+            t.setGravity(Gravity.CENTER);
+            t.setMaxLines(2);
+            t.setPadding(2 * u, 0, 2 * u, 0);
+            t.setFocusable(true);
+            t.setClickable(true);
+            focusLook(t, Channels.COLORS[i], 2 * u, 1.06f);
+            t.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) { openChannel(channel); }
+            });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(25 * u, 11 * u);
+            lp.rightMargin = (int) (1.6f * u);
+            tvRow.addView(t, lp);
+            channelTiles[i] = t;
+        }
+        tv.addView(tvRow, new HorizontalScrollView.LayoutParams(-2, -2));
+        page.addView(tv, new LinearLayout.LayoutParams(-1, -2));
+
         page.addView(sectionTitle(T.t("All apps"), side));
         grid = new LinearLayout(this);
         grid.setOrientation(LinearLayout.VERTICAL);
@@ -512,35 +562,19 @@ public class HomeActivity extends Activity {
         footer.setClipToPadding(false);
         footer.addView(pill("Remote", new Runnable() { @Override public void run() { showRemote(); } }));
         footer.addView(pill("Patro", new Runnable() { @Override public void run() { showPatro(); } }));
-        footer.addView(pill("Wallpaper", new Runnable() { @Override public void run() { showWallpapers(); } }));
+        footer.addView(pill("Apps", new Runnable() { @Override public void run() { showApps(); } }));
         footer.addView(pill("Settings", new Runnable() { @Override public void run() { openSettings(); } }));
         footer.addView(pill("TV home", new Runnable() {
             @Override public void run() {
                 if (!openOriginalHome()) toast("No other home screen found");
             }
         }));
-        footer.addView(pill("Apps", new Runnable() { @Override public void run() { showApps(); } }));
-        final TextView[] sound = new TextView[1];
-        sound[0] = (TextView) pill(prefs.getBoolean(KEY_SOUND, true) ? "Sound: on" : "Sound: off", new Runnable() {
-            @Override public void run() {
-                boolean on = !prefs.getBoolean(KEY_SOUND, true);
-                prefs.edit().putBoolean(KEY_SOUND, on).apply();
-                sound[0].setText(T.t(on ? "Sound: on" : "Sound: off"));
-                tick();
-            }
-        });
-        footer.addView(sound[0]);
-        // The other language, written in itself (in Latin letters where the TV has no Nepali font).
-        footer.addView(pill(T.ne ? "English" : T.fontOk() ? "\u0928\u0947\u092A\u093E\u0932\u0940" : "Nepali", new Runnable() {
-            @Override public void run() {
-                if (!T.fontOk()) {
-                    toast("This TV has no Nepali font");
-                    return;
-                }
-                prefs.edit().putString(KEY_LANG, T.ne ? "en" : "ne").commit();
-                recreate();
-            }
-        }));
+        footer.addView(pill("Options", new Runnable() { @Override public void run() { showOptions(); } }));
+        // The language in use, as its flag: OK switches to the other one.
+        TextView flag = (TextView) pill(T.ne ? "\u0928\u0947" : "EN", new Runnable() { @Override public void run() { switchLanguage(); } });
+        flag.setCompoundDrawablesWithIntrinsicBounds(new Icon(T.ne ? Icon.FLAG_NEPAL : Icon.FLAG_UK, (int) (2.9f * u), Color.WHITE), null, null, null);
+        flag.setCompoundDrawablePadding(u);
+        footer.addView(flag);
         net = text("", 2.2f, 0x99FFFFFF);
         net.setGravity(Gravity.RIGHT);
         net.setSingleLine(true);
@@ -600,6 +634,33 @@ public class HomeActivity extends Activity {
                     @Override public void onClick(DialogInterface dialog, int which) {
                         prefs.edit().putInt(KEY_THEME, which < THEME_NAMES.length ? which : -1).apply();
                         applyBackground();
+                    }
+                }).show();
+    }
+
+    private void switchLanguage() {
+        if (!T.fontOk()) {
+            toast("This TV has no Nepali font");
+            return;
+        }
+        prefs.edit().putString(KEY_LANG, T.ne ? "en" : "ne").commit();
+        recreate();
+    }
+
+    /** Wallpaper, sounds and language in one menu, so the footer stays short. */
+    private void showOptions() {
+        final boolean sound = prefs.getBoolean(KEY_SOUND, true);
+        String[] names = {T.t("Wallpaper"), T.t(sound ? "Sound: on" : "Sound: off"),
+                T.t("Language") + ": " + (T.ne ? "\u0928\u0947\u092A\u093E\u0932\u0940" : "English")};
+        new AlertDialog.Builder(this).setTitle(T.t("Options"))
+                .setItems(names, new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) {
+                        if (which == 0) showWallpapers();
+                        else if (which == 1) {
+                            prefs.edit().putBoolean(KEY_SOUND, !sound).apply();
+                            tick();
+                            showOptions();      // shown again with the new state, so the change is seen
+                        } else switchLanguage();
                     }
                 }).show();
     }
@@ -860,16 +921,26 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.13" : T.t("No internet") + "   \u2022   Ghar Home 0.13");
+        net.setText(online ? "Ghar Home 0.15" : T.t("No internet") + "   \u2022   Ghar Home 0.15");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
         if (online) refreshWeather(false);
+        if (online) refreshLive();
     }
 
     /** The volume, redrawn only when it has changed. Asked every second: this TV doesn't announce changes. */
     private void showVolume() {
         if (volumeText == null) return;
+        // Bluetooth switched on, and a speaker or headphones on the audio socket (where the TV can tell).
+        boolean bluetooth = false, wired = false;
+        try {
+            BluetoothAdapter bt = BluetoothAdapter.getDefaultAdapter();
+            bluetooth = bt != null && bt.isEnabled();
+        } catch (Throwable ignored) { }
+        try { wired = ((AudioManager) getSystemService(AUDIO_SERVICE)).isWiredHeadsetOn(); } catch (Throwable ignored) { }
+        bluetoothIcon.setVisibility(bluetooth ? View.VISIBLE : View.GONE);
+        wiredIcon.setVisibility(wired ? View.VISIBLE : View.GONE);
         try {
             AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
             int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), now = am.getStreamVolume(AudioManager.STREAM_MUSIC);
@@ -890,6 +961,62 @@ public class HomeActivity extends Activity {
         if (volumeText == null) return;
         showVolume();
         usbText.setVisibility(TvInput.usb() ? View.VISIBLE : View.GONE);
+    }
+
+    // ---------------------------------------------------------------- Nepali TV
+
+    /** Asks each channel whether it is streaming, a few kilobytes each, and marks the ones that are. */
+    private void refreshLive() {
+        if (liveBusy || channelTiles == null || System.currentTimeMillis() - liveChecked < 10 * 60 * 1000L) return;
+        liveBusy = true;
+        liveChecked = System.currentTimeMillis();
+        new Thread(new Runnable() {
+            @Override public void run() {
+                final String[] found = new String[Channels.NAMES.length];
+                for (int i = 0; i < found.length; i++) found[i] = Channels.liveVideo(i);
+                handler.post(new Runnable() {
+                    @Override public void run() {
+                        liveBusy = false;
+                        if (channelTiles == null) return;
+                        for (int i = 0; i < found.length; i++) {
+                            liveVideo[i] = found[i];
+                            GradientDrawable dot = null;
+                            if (found[i] != null) {          // a red dot: on air now
+                                dot = new GradientDrawable();
+                                dot.setShape(GradientDrawable.OVAL);
+                                dot.setColor(0xFFFF5252);
+                                dot.setSize((int) (1.4f * u), (int) (1.4f * u));
+                            }
+                            channelTiles[i].setCompoundDrawablesWithIntrinsicBounds(dot, null, null, null);
+                            channelTiles[i].setCompoundDrawablePadding(u);
+                        }
+                    }
+                });
+            }
+        }, "live").start();
+    }
+
+    /** Opens a channel: its live stream when it has one right now, otherwise its page of programmes. */
+    private void openChannel(final int i) {
+        toast("Opening " + Channels.NAMES[i]);
+        new Thread(new Runnable() {
+            @Override public void run() {
+                final String video = Channels.liveVideo(i);
+                handler.post(new Runnable() {
+                    @Override public void run() {
+                        liveVideo[i] = video;
+                        Intent open = new Intent(Intent.ACTION_VIEW, Uri.parse(video != null ? Channels.videoUrl(video) : Channels.channelUrl(i)))
+                                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        try {
+                            if (installed(SMARTTUBE)) open.setPackage(SMARTTUBE);
+                            startActivity(open);
+                        } catch (Exception e) {
+                            toast("SmartTube is needed to watch this");
+                        }
+                    }
+                });
+            }
+        }, "channel").start();
     }
 
     // ---------------------------------------------------------------- sound
