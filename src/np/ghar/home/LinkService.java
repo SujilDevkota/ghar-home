@@ -199,7 +199,7 @@ public class LinkService extends Service {
         }
 
         if (path.equals("/api/info")) {
-            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.12\",\"inputs\":[");
+            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.13\",\"inputs\":[");
             int[] inputs = TvInput.inputs();
             for (int i = 0; i < inputs.length; i++) {
                 b.append(i > 0 ? "," : "").append("{\"i\":").append(inputs[i]).append(",\"name\":\"").append(esc(TvInput.name(this, inputs[i])))
@@ -233,6 +233,10 @@ public class LinkService extends Service {
                 home.runOnUiThread(new Runnable() { @Override public void run() { home.refreshWeather(true); } });
             }
             json(out, 200, found == null ? "City not found" : "Weather set to " + found);
+        } else if (path.equals("/api/probe")) {
+            reply(out, 200, "text/plain; charset=utf-8", Net.probe().getBytes("UTF-8"));
+        } else if (path.equals("/api/link")) {
+            json(out, 200, link(query.get("u")));
         } else if (path.equals("/api/report")) {
             reply(out, 200, "text/plain; charset=utf-8", TvInput.report(this).getBytes("UTF-8"));
         } else if (path.equals("/api/source")) {
@@ -438,6 +442,35 @@ public class LinkService extends Service {
             if (best == null && (label.contains(q) || label.replace(" ", "").contains(squeezed))) best = app;
         }
         return best == null ? "No app called \"" + text.trim() + "\"" : open(best[0]);
+    }
+
+    /** A web link from the phone, opened on the TV. YouTube links go to SmartTube when it is installed. */
+    private String link(String u) {
+        if (u == null) return "No link given";
+        u = u.trim();
+        String low = u.toLowerCase(Locale.US);
+        if (!(low.startsWith("http://") || low.startsWith("https://")) || u.length() > 2000) return "That is not a web link";
+        Intent i = new Intent(Intent.ACTION_VIEW, Uri.parse(u)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        String host = Uri.parse(u).getHost();
+        boolean youtube = host != null && (host.endsWith("youtube.com") || host.equals("youtu.be"));
+        if (youtube) {
+            try {
+                getPackageManager().getPackageInfo("org.smarttube.stable", 0);
+                i.setPackage("org.smarttube.stable");
+            } catch (Exception ignored) { }
+        }
+        try {
+            startActivity(i);
+            return youtube && i.getPackage() != null ? "Opened in SmartTube" : "Opened on the TV";
+        } catch (Exception e) {
+            if (i.getPackage() != null) {
+                try {
+                    startActivity(new Intent(Intent.ACTION_VIEW, Uri.parse(u)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                    return "Opened on the TV";
+                } catch (Exception ignored) { }
+            }
+            return "No app on the TV can open that link";
+        }
     }
 
     /** Text from the phone into the text box that is open on the TV, in any app. */

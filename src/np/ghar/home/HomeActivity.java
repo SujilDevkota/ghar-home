@@ -519,7 +519,7 @@ public class HomeActivity extends Activity {
                 if (!openOriginalHome()) toast("No other home screen found");
             }
         }));
-        footer.addView(pill("Hidden", new Runnable() { @Override public void run() { showHidden(); } }));
+        footer.addView(pill("Apps", new Runnable() { @Override public void run() { showApps(); } }));
         final TextView[] sound = new TextView[1];
         sound[0] = (TextView) pill(prefs.getBoolean(KEY_SOUND, true) ? "Sound: on" : "Sound: off", new Runnable() {
             @Override public void run() {
@@ -860,7 +860,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.12" : T.t("No internet") + "   \u2022   Ghar Home 0.12");
+        net.setText(online ? "Ghar Home 0.13" : T.t("No internet") + "   \u2022   Ghar Home 0.13");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
@@ -1261,6 +1261,113 @@ public class HomeActivity extends Activity {
     private void saveFavs() {
         prefs.edit().putString(KEY_FAVS, TextUtils.join("\n", favs))
                 .putString(KEY_HIDDEN, TextUtils.join("\n", hidden)).apply();
+    }
+
+    /**
+     * One screen for arranging the apps: which are favourites, in what order, and which are hidden.
+     * Every app is a row with its settings as buttons, so nothing has to be discovered by holding a key.
+     */
+    private void showApps() {
+        final Dialog d = new Dialog(this, android.R.style.Theme_Black_NoTitleBar_Fullscreen);
+        LinearLayout screen = new LinearLayout(this);
+        screen.setOrientation(LinearLayout.VERTICAL);
+        screen.setBackgroundDrawable(new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] {0xFF0B1220, 0xFF0E2A3A}));
+        int side = side();
+        screen.setPadding(side, 5 * u, side, 0);
+        TextView title = text(T.t("Apps"), 5f, Color.WHITE);
+        title.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
+        screen.addView(title);
+        TextView hint = text(T.t("OK changes the highlighted setting. Press Back when you are done."), 2.3f, 0x99FFFFFF);
+        hint.setPadding(0, u, 0, 2 * u);
+        screen.addView(hint);
+        ScrollView sv = new ScrollView(this);
+        sv.setVerticalScrollBarEnabled(false);
+        final LinearLayout list = new LinearLayout(this);
+        list.setOrientation(LinearLayout.VERTICAL);
+        list.setPadding(0, u, 0, 6 * u);
+        list.setClipChildren(false);
+        list.setClipToPadding(false);
+        sv.addView(list);
+        screen.addView(sv, new LinearLayout.LayoutParams(-1, 0, 1f));
+
+        final String[] keepApp = {null};      // where the focus goes back to after the list is rebuilt
+        final String[] keepButton = {null};
+        final Runnable[] build = new Runnable[1];
+        build[0] = new Runnable() {
+            @Override public void run() {
+                list.removeAllViews();
+                // Favourites first, in their order; then the rest by name; hidden ones last.
+                List<AppItem> order = new ArrayList<AppItem>();
+                for (String pkg : favs) {
+                    for (AppItem a : apps) if (a.pkg.equals(pkg) && !hidden.contains(pkg)) order.add(a);
+                }
+                List<AppItem> rest = new ArrayList<AppItem>(apps);
+                Collections.sort(rest, new Comparator<AppItem>() {
+                    @Override public int compare(AppItem x, AppItem y) { return x.label.compareToIgnoreCase(y.label); }
+                });
+                for (AppItem a : rest) if (!favs.contains(a.pkg) && !hidden.contains(a.pkg)) order.add(a);
+                for (AppItem a : rest) if (hidden.contains(a.pkg)) order.add(a);
+
+                View want = null, first = null;
+                for (final AppItem a : order) {
+                    final boolean fav = favs.contains(a.pkg), hid = hidden.contains(a.pkg);
+                    LinearLayout row = new LinearLayout(HomeActivity.this);
+                    row.setGravity(Gravity.CENTER_VERTICAL);
+                    row.setPadding(0, u, 0, u);
+                    row.setClipChildren(false);
+                    row.setClipToPadding(false);
+                    ImageView icon = new ImageView(HomeActivity.this);
+                    icon.setImageBitmap(a.icon);
+                    icon.setAlpha(hid ? 0.35f : 1f);
+                    row.addView(icon, new LinearLayout.LayoutParams(5 * u, 5 * u));
+                    TextView name = text(a.label, 2.7f, hid ? 0x66FFFFFF : Color.WHITE);
+                    name.setSingleLine(true);
+                    name.setEllipsize(TextUtils.TruncateAt.END);
+                    name.setPadding(2 * u, 0, 2 * u, 0);
+                    row.addView(name, new LinearLayout.LayoutParams(0, -2, 1f));
+
+                    String[] buttons = hid ? new String[] {"Show"}
+                            : fav ? new String[] {"Favourite: yes", "Move up", "Move down", "Hide"}
+                            : new String[] {"Favourite: no", "Hide"};
+                    for (final String button : buttons) {
+                        View v = pill(button, new Runnable() {
+                            @Override public void run() {
+                                keepApp[0] = a.pkg;
+                                keepButton[0] = button;
+                                if (button.equals("Favourite: no")) { favs.add(a.pkg); keepButton[0] = "Favourite: yes"; }
+                                else if (button.equals("Favourite: yes")) { favs.remove(a.pkg); keepButton[0] = "Favourite: no"; }
+                                else if (button.equals("Hide")) { hidden.add(a.pkg); favs.remove(a.pkg); keepButton[0] = "Show"; }
+                                else if (button.equals("Show")) { hidden.remove(a.pkg); keepButton[0] = "Hide"; }
+                                else {
+                                    int step = button.equals("Move up") ? -1 : 1, from = favs.indexOf(a.pkg), to = from + step;
+                                    while (to >= 0 && to < favs.size() && (!installed(favs.get(to)) || hidden.contains(favs.get(to)))) to += step;
+                                    if (from >= 0 && to >= 0 && to < favs.size()) Collections.swap(favs, from, to);
+                                }
+                                saveFavs();
+                                build[0].run();
+                            }
+                        });
+                        row.addView(v);
+                        if (first == null) first = v;
+                        if (a.pkg.equals(keepApp[0]) && button.equals(keepButton[0])) want = v;
+                    }
+                    list.addView(row);
+                }
+                quiet = true;
+                if (want == null) want = first;
+                if (want != null) want.requestFocus();
+                quiet = false;
+            }
+        };
+        build[0].run();
+        d.setContentView(screen);
+        d.setOnDismissListener(new DialogInterface.OnDismissListener() {
+            @Override public void onDismiss(DialogInterface dialog) {
+                focusInFavs = true;
+                fill();
+            }
+        });
+        d.show();
     }
 
     /** The hidden apps, to bring one back. */

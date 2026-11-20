@@ -59,6 +59,9 @@ small{color:#8fa3c8;display:block;margin-top:8px;line-height:1.45;font-size:13px
 <div class="keys" style="grid-template-columns:repeat(2,1fr);margin:10px 0 0"><button onclick="api('type?k=backspace')">Delete</button><button onclick="api('type?k=enter')">Enter</button></div>
 <small id="reach"></small>
 
+<h2>Send a link to the TV</h2>
+<form onsubmit="sendLink();return false"><input type="text" id="l" placeholder="Paste a YouTube or web link" autocomplete="off" inputmode="url"><button>Open</button></form>
+
 <h2>Open an app</h2>
 <form onsubmit="say();return false"><input type="text" id="q" placeholder="Say or type a name" autocomplete="off"><button>Go</button></form>
 <small>Use the microphone or handwriting mode of your keyboard to speak or draw the name.</small>
@@ -90,6 +93,7 @@ function api(path,cb){askPin();var x=new XMLHttpRequest();x.open('GET',url(path)
 function key(k){if(navigator.vibrate)navigator.vibrate(12);api('key?k='+k)}
 function say(){var q=document.getElementById('q');api('say?q='+encodeURIComponent(q.value));q.value=''}
 function typeText(){var t=document.getElementById('t');if(t.value)api('type?q='+encodeURIComponent(t.value));t.value=''}
+function sendLink(){var l=document.getElementById('l');if(l.value)api('link?u='+encodeURIComponent(l.value));l.value=''}
 function city(){var c=document.getElementById('c');api('city?q='+encodeURIComponent(c.value),load);c.value=''}
 function theme(i){api('theme?i='+i,load)}
 function photo(el){var f=el.files[0];if(!f)return;askPin();msg('Sending photo…');

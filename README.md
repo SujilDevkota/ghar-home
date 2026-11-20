@@ -22,8 +22,10 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
 - **All apps, most used first.** Apps you open often rise to the top.
 - **Wallpapers.** Seven hand-picked backgrounds, or a photo sent from your phone.
 - **English and Nepali.** Switch in the footer. Nepali is offered only on TVs that have a Devanagari font.
-- **Hide apps.** Hold OK on an app to hide it. System clutter is hidden on the first start; *Hidden* in the
-  footer brings anything back.
+- **Apps screen.** *Apps* in the footer lists every app with buttons to make it a favourite, move it up or
+  down, and hide or show it. System clutter is hidden on the first start.
+- **Send a link.** Paste a YouTube or web link on the phone remote and it opens on the TV (YouTube links in
+  SmartTube).
 - **Phone remote.** *Remote* in the footer shows a QR code. Scan it and your phone becomes a remote: arrow
   keys, OK, Back, Home, the list of apps, wallpapers, the weather city, and a box to open an app by name.
   Use the microphone or handwriting mode of your phone's keyboard to speak or draw the name. Nothing is
