@@ -17,6 +17,7 @@ final class NepaliDate {
             "कात्तिक", "मंसिर", "पुस", "माघ", "फागुन", "चैत"};
     static final String[] DAYS_EN = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
     static final String[] DAYS_NE = {"आइत", "सोम", "मंगल", "बुध", "बिही", "शुक्र", "शनि"};
+    static final String[] AD_MONTHS_NE = {"जनवरी", "फेब्रुअरी", "मार्च", "अप्रिल", "मे", "जुन", "जुलाई", "अगस्ट", "सेप्टेम्बर", "अक्टोबर", "नोभेम्बर", "डिसेम्बर"};
     static final String[] AD_MONTHS = {"Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
 
     static final int FIRST_YEAR = 2083;

@@ -80,6 +80,7 @@ public class HomeActivity extends Activity {
     private static final String KEY_HIDDEN = "hidden";
     private static final String KEY_USES = "uses";
     private static final String KEY_SOUND = "sound";
+    private static final String KEY_SPEAKER = "external_speaker";
     static final String KEY_THEME = "theme";
     private static final String KEY_LANG = "lang";
     private static final String KEY_CLUTTER = "clutter_hidden";
@@ -571,9 +572,10 @@ public class HomeActivity extends Activity {
         }));
         footer.addView(pill("Options", new Runnable() { @Override public void run() { showOptions(); } }));
         // The language in use, as its flag: OK switches to the other one.
-        TextView flag = (TextView) pill(T.ne ? "\u0928\u0947" : "EN", new Runnable() { @Override public void run() { switchLanguage(); } });
+        TextView flag = (TextView) pill("", new Runnable() { @Override public void run() { switchLanguage(); } });
         flag.setCompoundDrawablesWithIntrinsicBounds(new Icon(T.ne ? Icon.FLAG_NEPAL : Icon.FLAG_UK, (int) (2.9f * u), Color.WHITE), null, null, null);
-        flag.setCompoundDrawablePadding(u);
+        flag.setCompoundDrawablePadding(0);
+        flag.setPadding(2 * u, (int) (1.3f * u), 2 * u, (int) (1.3f * u));
         footer.addView(flag);
         net = text("", 2.2f, 0x99FFFFFF);
         net.setGravity(Gravity.RIGHT);
@@ -647,20 +649,27 @@ public class HomeActivity extends Activity {
         recreate();
     }
 
-    /** Wallpaper, sounds and language in one menu, so the footer stays short. */
+    /** Wallpaper, sounds and the external-speaker mark in one menu, so the footer stays short. */
     private void showOptions() {
-        final boolean sound = prefs.getBoolean(KEY_SOUND, true);
+        final boolean sound = prefs.getBoolean(KEY_SOUND, true), speaker = prefs.getBoolean(KEY_SPEAKER, false);
         String[] names = {T.t("Wallpaper"), T.t(sound ? "Sound: on" : "Sound: off"),
-                T.t("Language") + ": " + (T.ne ? "\u0928\u0947\u092A\u093E\u0932\u0940" : "English")};
+                T.t(speaker ? "External speaker: yes" : "External speaker: no")};
         new AlertDialog.Builder(this).setTitle(T.t("Options"))
                 .setItems(names, new DialogInterface.OnClickListener() {
                     @Override public void onClick(DialogInterface dialog, int which) {
-                        if (which == 0) showWallpapers();
-                        else if (which == 1) {
+                        if (which == 0) {
+                            showWallpapers();
+                            return;
+                        }
+                        if (which == 1) {
                             prefs.edit().putBoolean(KEY_SOUND, !sound).apply();
                             tick();
-                            showOptions();      // shown again with the new state, so the change is seen
-                        } else switchLanguage();
+                        } else {
+                            // Most TVs can't tell when a speaker is on the audio socket, so the owner says so here.
+                            prefs.edit().putBoolean(KEY_SPEAKER, !speaker).apply();
+                            showVolume();
+                        }
+                        showOptions();      // shown again with the new state, so the change is seen
                     }
                 }).show();
     }
@@ -913,7 +922,13 @@ public class HomeActivity extends Activity {
         clock.setText(android.text.format.DateFormat.getTimeFormat(this).format(now));
         String miti = NepaliDate.format(c, T.ne), festival = NepaliDate.festival(c, T.ne);
         CharSequence english = android.text.format.DateFormat.format("EEEE, d MMMM", now);
-        date.setText(miti == null ? english : T.ne ? miti + "   \u2022   " + english : english + "   \u2022   " + miti);
+        if (T.ne) {
+            String weekday = NepaliDate.DAYS_NE[NepaliDate.weekday(NepaliDate.today(c))] + "\u092C\u093E\u0930";       // ...बार
+            String adDate = T.num("" + c.get(Calendar.DAY_OF_MONTH)) + " " + NepaliDate.AD_MONTHS_NE[c.get(Calendar.MONTH)];
+            date.setText(weekday + ", " + (miti == null ? adDate : miti + "   \u2022   " + adDate));
+        } else {
+            date.setText(miti == null ? english : english + "   \u2022   " + miti);
+        }
         bs.setText(festival == null ? "" : festival);
         bs.setVisibility(festival == null ? View.GONE : View.VISIBLE);
         boolean online = false;
@@ -921,7 +936,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.15" : T.t("No internet") + "   \u2022   Ghar Home 0.15");
+        net.setText(online ? "Ghar Home 0.16" : T.t("No internet") + "   \u2022   Ghar Home 0.16");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
@@ -940,7 +955,7 @@ public class HomeActivity extends Activity {
         } catch (Throwable ignored) { }
         try { wired = ((AudioManager) getSystemService(AUDIO_SERVICE)).isWiredHeadsetOn(); } catch (Throwable ignored) { }
         bluetoothIcon.setVisibility(bluetooth ? View.VISIBLE : View.GONE);
-        wiredIcon.setVisibility(wired ? View.VISIBLE : View.GONE);
+        wiredIcon.setVisibility(wired || prefs.getBoolean(KEY_SPEAKER, false) ? View.VISIBLE : View.GONE);
         try {
             AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
             int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), now = am.getStreamVolume(AudioManager.STREAM_MUSIC);

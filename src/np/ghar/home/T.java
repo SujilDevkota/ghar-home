@@ -59,6 +59,7 @@ final class T {
                 "Nepali TV", "नेपाली टिभी",
                 "SmartTube is needed to watch this", "यो हेर्न SmartTube चाहिन्छ",
                 "Options", "विकल्प", "Language", "भाषा",
+                "External speaker: yes", "बाहिरी स्पिकर: छ", "External speaker: no", "बाहिरी स्पिकर: छैन",
                 "Sunny", "घमाइलो", "Clear", "सफा", "Mostly sunny", "प्रायः घमाइलो", "Mostly clear", "प्रायः सफा",
                 "Partly cloudy", "आंशिक बदली", "Cloudy", "बदली", "Fog", "हुस्सु", "Drizzle", "सिमसिम पानी",
                 "Rain", "वर्षा", "Snow", "हिउँ", "Showers", "झरी", "Snow showers", "हिमपात", "Thunderstorm", "चट्याङसहित वर्षा",
