@@ -20,11 +20,10 @@ import java.util.Locale;
  */
 final class TvInput {
 
-    static final String[] NAMES = {"TV", "HDMI 1", "HDMI 2", "HDMI 3", "AV"};
-    /** MStar's numbers for those inputs (TvCommonManager.INPUT_SOURCE_ATV, _HDMI, _HDMI2, _HDMI3, _CVBS). */
-    private static final int[] CODES = {1, 23, 24, 25, 2};
-    private static final String[] ENUMS = {"E_INPUT_SOURCE_ATV", "E_INPUT_SOURCE_HDMI", "E_INPUT_SOURCE_HDMI2",
-            "E_INPUT_SOURCE_HDMI3", "E_INPUT_SOURCE_CVBS"};
+    /** Every input a TV of this kind can have; each TV says which ones it really has. */
+    static final String[] NAMES = {"TV", "Digital TV", "HDMI 1", "HDMI 2", "HDMI 3", "HDMI 4", "AV", "YPbPr", "VGA"};
+    /** MStar's numbers for them, which are also the positions in its EnumInputSource. */
+    private static final int[] CODES = {1, 28, 23, 24, 25, 26, 2, 16, 0};
     private static final String MANAGER = "com.mstar.android.tv.TvCommonManager";
     private static final String PLAYER = "com.mstar.tv.tvplayer.ui";
 
@@ -34,33 +33,50 @@ final class TvInput {
         return Class.forName(MANAGER).getMethod("getInstance").invoke(null);
     }
 
-    /** Whether this TV has inputs this app knows how to switch. */
-    static boolean available(Context c) {
+    /**
+     * The inputs this TV has, as positions in NAMES. Empty on a TV without MStar's classes.
+     * MStar's getSourceList is one number per input, above zero where the TV has it.
+     */
+    static int[] inputs() {
         try {
-            manager();
-            return true;
-        } catch (Throwable t) {
-            try {
-                c.getPackageManager().getPackageInfo(PLAYER, 0);
-                return true;
-            } catch (Exception e) {
-                return false;
+            Object m = manager();
+            int[] list = null;
+            try { list = (int[]) m.getClass().getMethod("getSourceList").invoke(m); } catch (Throwable ignored) { }
+            int[] out = new int[NAMES.length];
+            int n = 0;
+            for (int i = 0; i < NAMES.length; i++) {
+                boolean has;
+                if (list == null || list.length == 0) has = i == 0 || (i >= 2 && i <= 4) || i == 6;     // no list: the usual ones
+                else if (list.length > 28) has = list[CODES[i]] > 0;
+                else {
+                    has = false;
+                    for (int v : list) has |= v == CODES[i];
+                }
+                if (has) out[n++] = i;
             }
+            return java.util.Arrays.copyOf(out, n);
+        } catch (Throwable t) {
+            return new int[0];
+        }
+    }
+
+    /** Whether something is plugged into an input and sending a picture, where the TV can tell. */
+    static boolean live(int i) {
+        try {
+            Object m = manager();
+            boolean[] on = (boolean[]) m.getClass().getMethod("GetInputSourceStatus").invoke(m);
+            return on != null && CODES[i] < on.length && on[CODES[i]];
+        } catch (Throwable t) {
+            return false;
         }
     }
 
     /** Switches to an input and shows it. Null when it worked, otherwise what went wrong. */
-    @SuppressWarnings({"unchecked", "rawtypes"})
     static String show(Context c, int i) {
         String problem = null;
         try {
             Object m = manager();
-            try {
-                m.getClass().getMethod("setInputSource", int.class).invoke(m, CODES[i]);
-            } catch (NoSuchMethodException old) {
-                Class en = Class.forName("com.mstar.android.tvapi.common.vo.TvOsType$EnumInputSource");
-                m.getClass().getMethod("setInputSource", en).invoke(m, Enum.valueOf(en, ENUMS[i]));
-            }
+            m.getClass().getMethod("setInputSource", int.class).invoke(m, CODES[i]);
         } catch (Throwable t) {
             problem = "switch: " + cause(t);
         }
@@ -71,10 +87,11 @@ final class TvInput {
             c.startActivity(player);
         } catch (Throwable t) {
             try {
-                Intent app = c.getPackageManager().getLaunchIntentForPackage(PLAYER);
+                Intent app = new Intent(Intent.ACTION_MAIN);
+                app.setClassName(PLAYER, PLAYER + ".RootActivity");
                 c.startActivity(app.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
             } catch (Throwable t2) {
-                problem = (problem == null ? "" : problem + "; ") + "player: " + cause(t);
+                problem = (problem == null ? "" : problem + "; ") + "player: " + cause(t) + " / " + cause(t2);
             }
         }
         return problem;
@@ -152,6 +169,15 @@ final class TvInput {
                 try { b.append(get).append(" = ").append(m.getClass().getMethod(get).invoke(m)).append('\n'); } catch (Throwable t) { b.append(get).append(": ").append(cause(t)).append('\n'); }
             }
         } catch (Throwable t) { b.append("manager: ").append(cause(t)).append('\n'); }
+
+        try {
+            Object m = manager();
+            b.append("getSourceList = ").append(java.util.Arrays.toString((int[]) m.getClass().getMethod("getSourceList").invoke(m))).append('\n');
+            b.append("GetInputSourceStatus = ").append(java.util.Arrays.toString((boolean[]) m.getClass().getMethod("GetInputSourceStatus").invoke(m))).append('\n');
+        } catch (Throwable t) { b.append("lists: ").append(cause(t)).append('\n'); }
+        b.append("inputs() =");
+        for (int i : inputs()) b.append(' ').append(NAMES[i]).append(live(i) ? "*" : "");
+        b.append('\n');
 
         b.append("\n[tv packages]\n");
         try {

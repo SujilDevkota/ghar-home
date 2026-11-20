@@ -427,21 +427,35 @@ public class HomeActivity extends Activity {
         status.setPadding(side - u / 2, 2 * u, side, 0);
         status.setGravity(Gravity.CENTER_VERTICAL);
         status.setClipChildren(false);
-        if (TvInput.available(this)) {
-            for (int i = 0; i < TvInput.NAMES.length; i++) {
-                final int input = i;
-                status.addView(pill(TvInput.NAMES[i], new Runnable() {
+        try {
+            for (final int input : TvInput.inputs()) {
+                // A dot marks an input with something plugged in and switched on, such as a set-top box.
+                status.addView(pill(TvInput.NAMES[input] + (TvInput.live(input) ? "  \u2022" : ""), new Runnable() {
                     @Override public void run() {
                         String problem = TvInput.show(HomeActivity.this, input);
                         if (problem != null) Toast.makeText(HomeActivity.this, problem, Toast.LENGTH_LONG).show();
                     }
                 }));
             }
-        }
+        } catch (Throwable ignored) { }      // a TV whose inputs this app can't reach: no buttons
         View gap = new View(this);
         status.addView(gap, new LinearLayout.LayoutParams(0, 1, 1f));
-        usbText = text("", 2.3f, 0xFF9FE8C0);
-        usbText.setPadding(0, 0, 3 * u, 0);
+        usbText = (TextView) pill("USB connected", new Runnable() {
+            @Override public void run() {
+                // The TV's own file manager, where it has one; otherwise there is nothing to open.
+                for (String pkg : new String[] {"com.cultraview.newfilemanager", "com.android.documentsui"}) {
+                    Intent files = getPackageManager().getLaunchIntentForPackage(pkg);
+                    if (files == null) continue;
+                    try {
+                        startActivity(files.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK));
+                        return;
+                    } catch (Exception ignored) { }
+                }
+            }
+        });
+        usbText.setTextColor(0xFF9FE8C0);
+        usbText.setVisibility(View.GONE);
+        ((LinearLayout.LayoutParams) usbText.getLayoutParams()).rightMargin = 3 * u;
         status.addView(usbText);
         volumeText = text("", 2.3f, 0xCCFFFFFF);
         status.addView(volumeText);
@@ -841,7 +855,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.8" : T.t("No internet") + "   \u2022   Ghar Home 0.8");
+        net.setText(online ? "Ghar Home 0.9" : T.t("No internet") + "   \u2022   Ghar Home 0.9");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
@@ -858,7 +872,7 @@ public class HomeActivity extends Activity {
         } catch (Throwable t) {
             volumeText.setText("");
         }
-        usbText.setText(TvInput.usb() ? T.t("USB connected") : "");
+        usbText.setVisibility(TvInput.usb() ? View.VISIBLE : View.GONE);
     }
 
     // ---------------------------------------------------------------- sound

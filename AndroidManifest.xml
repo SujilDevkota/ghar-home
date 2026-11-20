@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="np.ghar.home"
-    android:versionCode="8"
-    android:versionName="0.8">
+    android:versionCode="9"
+    android:versionName="0.9">
 
     <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="23" />
 
@@ -24,8 +24,6 @@
         android:allowBackup="false">
 
         <!-- The TV board maker's own classes for switching inputs, on TVs that have them. -->
-        <uses-library android:name="com.mstar.android.tv" android:required="false" />
-        <uses-library android:name="com.mstar.android.tvapi" android:required="false" />
         <uses-library android:name="com.mstar.android" android:required="false" />
 
         <activity

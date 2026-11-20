@@ -199,7 +199,13 @@ public class LinkService extends Service {
         }
 
         if (path.equals("/api/info")) {
-            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.8\",\"themes\":[");
+            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.9\",\"inputs\":[");
+            int[] inputs = TvInput.inputs();
+            for (int i = 0; i < inputs.length; i++) {
+                b.append(i > 0 ? "," : "").append("{\"i\":").append(inputs[i]).append(",\"name\":\"").append(TvInput.NAMES[inputs[i]])
+                        .append("\",\"live\":").append(TvInput.live(inputs[i])).append('}');
+            }
+            b.append("],\"themes\":[");
             for (int i = 0; i < HomeActivity.THEME_NAMES.length; i++) {
                 b.append(i > 0 ? "," : "").append('"').append(esc(HomeActivity.THEME_NAMES[i])).append('"');
             }
