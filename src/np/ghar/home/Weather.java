@@ -58,7 +58,8 @@ final class Weather {
             for (int i = 0; i < out.length; i++) {
                 String day = days.getString(i);
                 if (!day.matches("\\d{4}-\\d{2}-\\d{2}")) return null;
-                out[i] = new String[] {day, describe(codes.getInt(i), true), "" + Math.round(high.getDouble(i)), "" + Math.round(low.getDouble(i))};
+                out[i] = new String[] {day, describe(codes.getInt(i), true), "" + Math.round(high.getDouble(i)), "" + Math.round(low.getDouble(i)),
+                        kind(codes.getInt(i), true)};
             }
             return out;
         } catch (Throwable t) {

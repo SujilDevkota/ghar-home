@@ -81,7 +81,7 @@ small{color:#8fa3c8;display:block;margin-top:8px;line-height:1.45;font-size:13px
 <form onsubmit="city();return false"><input type="text" id="c" placeholder="e.g. Pokhara" autocomplete="off"><button>Set</button></form>
 <small id="cityNow"></small>
 </div><script>
-var COLORS=['#111b33','#3a2352','#0f2e24','#4a1d2c','#07304a','#4d0f2e','#141418'];
+var COLORS=['#111b33','#3a2352','#0f2e24','#4a1d2c','#07304a','#4d0f2e','#141418','#111b33','#07304a','#0f2e24'];
 var pin='';try{pin=localStorage.getItem('pin')||''}catch(e){}
 var m=/[?&]pin=(\d+)/.exec(location.search);
 if(m){pin=m[1];try{localStorage.setItem('pin',pin);history.replaceState(null,'','/')}catch(e){}}

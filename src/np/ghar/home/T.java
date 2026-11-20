@@ -63,6 +63,7 @@ final class T {
                 "Get YouTube (SmartTube)", "YouTube (SmartTube) राख्नुहोस्",
                 "Google's YouTube app no longer works on old TVs. SmartTube is a free YouTube app that does.", "पुराना टिभीमा Google को YouTube एप चल्दैन। SmartTube निःशुल्क YouTube एप हो, जुन चल्छ।",
                 "Open the phone remote, choose \"Install an app on the TV\" and follow the steps there.", "फोन रिमोट खोल्नुहोस्, \"Install an app on the TV\" छान्नुहोस् र त्यहाँका चरण पछ्याउनुहोस्।",
+                "Starry night", "ताराले भरिएको रात", "Snowfall", "हिमपात", "Fireflies", "जुनकिरी", "animated", "चल्ने", "Sounds", "आवाज",
                 "Sunny", "घमाइलो", "Clear", "सफा", "Mostly sunny", "प्रायः घमाइलो", "Mostly clear", "प्रायः सफा",
                 "Partly cloudy", "आंशिक बदली", "Cloudy", "बदली", "Fog", "हुस्सु", "Drizzle", "सिमसिम पानी",
                 "Rain", "वर्षा", "Snow", "हिउँ", "Showers", "झरी", "Snow showers", "हिमपात", "Thunderstorm", "चट्याङसहित वर्षा",

@@ -88,7 +88,10 @@ public class HomeActivity extends Activity {
             "com.google.android.gms", "com.ctv.app", "com.assem.launcher", "com.android.providers.downloads.ui"};
 
     /** Hand-picked backgrounds: three colors from the top left to the bottom right, and a glow in the corner. */
-    static final String[] THEME_NAMES = {"Night sky", "Himalayan dawn", "Forest", "Sunset", "Deep ocean", "Rhododendron", "Charcoal"};
+    static final String[] THEME_NAMES = {"Night sky", "Himalayan dawn", "Forest", "Sunset", "Deep ocean", "Rhododendron", "Charcoal",
+            "Starry night", "Snowfall", "Fireflies"};
+    /** The animated themes come after the still ones: each is a still theme with something moving over it. */
+    private static final int[] ANIMATED_OVER = {0, 4, 2};
     private static final int[][] THEMES = {
             {0xFF0B1220, 0xFF111B33, 0xFF0E2A3A, 0x552F6BFF},
             {0xFF1A1436, 0xFF3A2352, 0xFF7A3B5E, 0x55FF9E7A},
@@ -137,6 +140,7 @@ public class HomeActivity extends Activity {
     private boolean usesChanged;
     private boolean weatherBusy;
     private WeatherArt art;
+    private FxView fx;
     private Icon volumeIcon;
     private ImageView bluetoothIcon, wiredIcon, wifiView;
     private Icon btIcon, wifiIcon;
@@ -239,6 +243,7 @@ public class HomeActivity extends Activity {
         super.onResume();
         showing = this;
         GharAccess.letOriginal = false;      // back here: the Home button is ours again
+        if (fx != null) fx.setRunning(true);
         applyBackground();
         if (usesChanged && favRow != null && !apps.isEmpty()) {    // back from an app: the order may have changed
             usesChanged = false;
@@ -255,6 +260,7 @@ public class HomeActivity extends Activity {
     @Override protected void onPause() {
         super.onPause();
         if (showing == this) showing = null;
+        if (fx != null) fx.setRunning(false);
         handler.removeCallbacks(tick);
         handler.removeCallbacks(settled);
     }
@@ -407,6 +413,8 @@ public class HomeActivity extends Activity {
         scroll.setVerticalScrollBarEnabled(false);
         scroll.setFillViewport(true);
         scroll.setOverScrollMode(View.OVER_SCROLL_NEVER);
+        fx = new FxView(this, u);
+        root.addView(fx, new FrameLayout.LayoutParams(-1, -1));
         art = new WeatherArt(this);
         root.addView(art, new FrameLayout.LayoutParams(60 * u, 42 * u, Gravity.TOP | Gravity.RIGHT));
         root.addView(scroll, new FrameLayout.LayoutParams(-1, -1));
@@ -625,6 +633,12 @@ public class HomeActivity extends Activity {
         updateClock();
     }
 
+    /** The still theme a wallpaper is painted from. */
+    private static int stillTheme(int theme) {
+        if (theme >= THEMES.length && theme < THEME_NAMES.length) return ANIMATED_OVER[theme - THEMES.length];
+        return theme >= 0 && theme < THEMES.length ? theme : 0;
+    }
+
     static File photoFile(Context c) { return new File(c.getFilesDir(), "wallpaper.jpg"); }
 
     /** The chosen background: one of the themes, or the photo sent from a phone under a dark veil. */
@@ -648,7 +662,7 @@ public class HomeActivity extends Activity {
             } catch (Throwable ignored) { }     // a photo too big for this TV: the theme below shows
         }
         if (back == null) {
-            int[] t = THEMES[theme >= 0 && theme < THEMES.length ? theme : 0];
+            int[] t = THEMES[stillTheme(theme)];
             GradientDrawable sky = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] {t[0], t[1], t[2]});
             GradientDrawable glow = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM, new int[] {t[3], t[3] & 0x00FFFFFF});
             glow.setGradientType(GradientDrawable.RADIAL_GRADIENT);
@@ -670,22 +684,91 @@ public class HomeActivity extends Activity {
             } catch (Throwable ignored) { }     // no memory for it: the gradients themselves are drawn
         }
         root.setBackgroundDrawable(back);
+        if (fx != null) fx.setMode(theme >= THEMES.length && theme < THEME_NAMES.length ? theme - THEMES.length + 1 : FxView.NONE);
         shownTheme = theme;
         shownPhoto = photo.lastModified();
     }
 
+    /** A popup in the launcher's own look: a rounded panel over the dimmed home screen. */
+    private Dialog sheet(String title, View content) {
+        Dialog d = new Dialog(this, android.R.style.Theme_Translucent_NoTitleBar_Fullscreen);
+        FrameLayout dim = new FrameLayout(this);
+        dim.setBackgroundColor(0xC0000000);
+        LinearLayout panel = new LinearLayout(this);
+        panel.setOrientation(LinearLayout.VERTICAL);
+        panel.setBackgroundDrawable(shape(0xF5131B30, 3 * u, Math.max(1, u / 5), 0x40FFFFFF));
+        panel.setPadding(5 * u, 4 * u, 5 * u, 4 * u);
+        panel.setClipChildren(false);
+        panel.setClipToPadding(false);
+        TextView t = text(title, 3.8f, Color.WHITE);
+        t.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
+        t.setPadding(0, 0, 0, 3 * u);
+        panel.addView(t);
+        panel.addView(content);
+        dim.addView(panel, new FrameLayout.LayoutParams(-2, -2, Gravity.CENTER));
+        d.setContentView(dim);
+        panel.setAlpha(0f);
+        panel.setScaleX(0.94f);
+        panel.setScaleY(0.94f);
+        panel.animate().alpha(1f).scaleX(1f).scaleY(1f).setDuration(180).setInterpolator(new DecelerateInterpolator()).start();
+        return d;
+    }
+
     private void showWallpapers() {
         final boolean photo = photoFile(this).exists();
-        String[] names = new String[THEME_NAMES.length + (photo ? 1 : 0)];
-        for (int i = 0; i < THEME_NAMES.length; i++) names[i] = T.t(THEME_NAMES[i]);
-        if (photo) names[THEME_NAMES.length] = T.t("Photo from phone");
-        new AlertDialog.Builder(this).setTitle(T.t("Wallpaper"))
-                .setItems(names, new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) {
-                        prefs.edit().putInt(KEY_THEME, which < THEME_NAMES.length ? which : -1).apply();
-                        applyBackground();
-                    }
-                }).show();
+        final int now = prefs.getInt(KEY_THEME, 0), count = THEME_NAMES.length + (photo ? 1 : 0), perRow = 5;
+        LinearLayout grid = new LinearLayout(this);
+        grid.setOrientation(LinearLayout.VERTICAL);
+        grid.setClipChildren(false);
+        grid.setClipToPadding(false);
+        final Dialog[] d = new Dialog[1];
+        LinearLayout row = null;
+        View selected = null;
+        for (int i = 0; i < count; i++) {
+            if (i % perRow == 0) {
+                row = new LinearLayout(this);
+                row.setClipChildren(false);
+                LinearLayout.LayoutParams rp = new LinearLayout.LayoutParams(-2, -2);
+                rp.bottomMargin = 2 * u;
+                grid.addView(row, rp);
+            }
+            final int theme = i < THEME_NAMES.length ? i : -1;
+            boolean animated = theme >= THEMES.length;
+            int[] colors = theme == -1 ? new int[] {0xFF3A4660, 0xFF22304A, 0xFF101828} : THEMES[stillTheme(theme)];
+            final GradientDrawable look = new GradientDrawable(GradientDrawable.Orientation.TL_BR, new int[] {colors[0], colors[1], colors[2]});
+            look.setCornerRadius(2 * u);
+            String name = T.t(theme == -1 ? "Photo from phone" : THEME_NAMES[theme]);
+            TextView tile = text((theme == now ? "\u2713  " : "") + name + (animated ? "\n" + T.t("animated") : ""), 2.2f, Color.WHITE);
+            tile.setGravity(Gravity.CENTER);
+            tile.setLineSpacing(0, 1.2f);
+            tile.setPadding(u, 0, u, 0);
+            tile.setFocusable(true);
+            tile.setClickable(true);
+            tile.setBackgroundDrawable(look);
+            tile.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+                @Override public void onFocusChange(View v, boolean has) {
+                    look.setStroke(has ? Math.max(2, u / 3) : 0, Color.WHITE);
+                    v.animate().scaleX(has ? 1.07f : 1f).scaleY(has ? 1.07f : 1f).setDuration(140).start();
+                    if (has && !quiet) tick();
+                }
+            });
+            tile.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) {
+                    prefs.edit().putInt(KEY_THEME, theme).apply();
+                    applyBackground();
+                    d[0].dismiss();
+                }
+            });
+            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(24 * u, 13 * u);
+            lp.rightMargin = 2 * u;
+            row.addView(tile, lp);
+            if (theme == now) selected = tile;
+        }
+        d[0] = sheet(T.t("Wallpaper"), grid);
+        d[0].show();
+        quiet = true;
+        if (selected != null) selected.requestFocus();
+        quiet = false;
     }
 
     private void switchLanguage() {
@@ -697,22 +780,56 @@ public class HomeActivity extends Activity {
         recreate();
     }
 
-    /** Wallpaper and sounds in one menu, so the footer stays short. */
+    /** Wallpaper and sounds in one place, so the footer stays short. */
     private void showOptions() {
-        final boolean sound = prefs.getBoolean(KEY_SOUND, true);
-        String[] names = {T.t("Wallpaper"), T.t(sound ? "Sound: on" : "Sound: off")};
-        new AlertDialog.Builder(this).setTitle(T.t("Options"))
-                .setItems(names, new DialogInterface.OnClickListener() {
-                    @Override public void onClick(DialogInterface dialog, int which) {
-                        if (which == 0) {
-                            showWallpapers();
-                            return;
-                        }
-                        prefs.edit().putBoolean(KEY_SOUND, !sound).apply();
-                        tick();
-                        showOptions();      // shown again with the new state, so the change is seen
-                    }
-                }).show();
+        LinearLayout row = new LinearLayout(this);
+        row.setClipChildren(false);
+        row.setClipToPadding(false);
+        final Dialog[] d = new Dialog[1];
+        final TextView[] sound = new TextView[1];
+        TextView wall = optionCard(T.t("Wallpaper"), T.t(prefs.getInt(KEY_THEME, 0) == -1 ? "Photo from phone" : THEME_NAMES[stillOrAnimated()]), new Runnable() {
+            @Override public void run() {
+                d[0].dismiss();
+                showWallpapers();
+            }
+        });
+        sound[0] = optionCard(T.t("Sounds"), T.t(prefs.getBoolean(KEY_SOUND, true) ? "on" : "off"), new Runnable() {
+            @Override public void run() {
+                boolean on = !prefs.getBoolean(KEY_SOUND, true);
+                prefs.edit().putBoolean(KEY_SOUND, on).apply();
+                sound[0].setText(T.t("Sounds") + "\n" + T.t(on ? "on" : "off"));
+                tick();
+            }
+        });
+        row.addView(wall);
+        row.addView(sound[0]);
+        d[0] = sheet(T.t("Options"), row);
+        d[0].show();
+        quiet = true;
+        wall.requestFocus();
+        quiet = false;
+    }
+
+    private int stillOrAnimated() {
+        int theme = prefs.getInt(KEY_THEME, 0);
+        return theme >= 0 && theme < THEME_NAMES.length ? theme : 0;
+    }
+
+    /** A large button with a name and, under it, what it is set to. */
+    private TextView optionCard(String name, String value, final Runnable action) {
+        TextView t = text(name + "\n" + value, 2.6f, Color.WHITE);
+        t.setGravity(Gravity.CENTER);
+        t.setLineSpacing(0, 1.35f);
+        t.setFocusable(true);
+        t.setClickable(true);
+        focusLook(t, 0x1FFFFFFF, 2 * u, 1.06f);
+        t.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { action.run(); }
+        });
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(30 * u, 15 * u);
+        lp.rightMargin = 2 * u;
+        t.setLayoutParams(lp);
+        return t;
     }
 
     /** The Nepali calendar, a month at a time. */
@@ -991,7 +1108,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.19" : T.t("No internet") + "   \u2022   Ghar Home 0.19");
+        net.setText(online ? "Ghar Home 0.20" : T.t("No internet") + "   \u2022   Ghar Home 0.20");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
@@ -1185,29 +1302,51 @@ public class HomeActivity extends Activity {
 
     /** The next five days, from the same free service as the weather on the home screen. */
     private void showForecast() {
-        final AlertDialog d = new AlertDialog.Builder(this).setTitle(Weather.city(prefs))
-                .setMessage("\u2026").setPositiveButton(T.t("Close"), null).show();
+        final LinearLayout row = new LinearLayout(this);
+        row.setClipChildren(false);
+        row.setMinimumHeight(26 * u);
+        row.setMinimumWidth(5 * 24 * u);
+        row.setGravity(Gravity.CENTER);
+        row.addView(text("\u2026", 4f, 0x99FFFFFF));
+        final Dialog d = sheet(Weather.city(prefs), row);
+        d.show();
         new Thread(new Runnable() {
             @Override public void run() {
                 final String[][] days = Weather.forecast(prefs);
                 handler.post(new Runnable() {
                     @Override public void run() {
                         if (!d.isShowing()) return;
+                        row.removeAllViews();
                         if (days == null) {
-                            d.setMessage(T.t("The forecast could not be loaded."));
+                            row.addView(text(T.t("The forecast could not be loaded."), 2.6f, 0xCCFFFFFF));
                             return;
                         }
-                        StringBuilder b = new StringBuilder();
                         for (int i = 0; i < days.length; i++) {
                             String[] ymd = days[i][0].split("-");
                             long n = NepaliDate.dayNumber(Integer.parseInt(ymd[0]), Integer.parseInt(ymd[1]), Integer.parseInt(ymd[2]));
                             String day = i == 0 ? T.t("Today") : T.ne ? NepaliDate.DAYS_NE[NepaliDate.weekday(n)] + "\u092C\u093E\u0930"
                                     : new String[] {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}[NepaliDate.weekday(n)];
-                            b.append(day).append(":   ").append(T.t(days[i][1])).append(",   ")
-                                    .append(T.num(days[i][2])).append("\u00B0 / ").append(T.num(days[i][3])).append("\u00B0");
-                            if (i < days.length - 1) b.append("\n\n");
+                            LinearLayout card = new LinearLayout(HomeActivity.this);
+                            card.setOrientation(LinearLayout.VERTICAL);
+                            card.setGravity(Gravity.CENTER_HORIZONTAL);
+                            card.setBackgroundDrawable(shape(i == 0 ? 0x332F6BFF : 0x14FFFFFF, 2 * u, 0, 0));
+                            card.setPadding(u, 2 * u, u, 2 * u);
+                            TextView name = text(day, 2.4f, Color.WHITE);
+                            name.setTypeface(Typeface.DEFAULT_BOLD);
+                            card.addView(name);
+                            WeatherArt picture = new WeatherArt(HomeActivity.this);
+                            picture.centered = true;
+                            picture.setKind(days[i][4]);
+                            card.addView(picture, new LinearLayout.LayoutParams(-1, 11 * u));
+                            card.addView(text(T.t(days[i][1]), 2.1f, 0xCCFFFFFF));
+                            TextView temps = text(T.num(days[i][2]) + "\u00B0", 3.4f, Color.WHITE);
+                            temps.setPadding(0, u, 0, 0);
+                            card.addView(temps);
+                            card.addView(text(T.num(days[i][3]) + "\u00B0", 2.3f, 0x99FFFFFF));
+                            LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(22 * u, -2);
+                            if (i < days.length - 1) lp.rightMargin = 2 * u;
+                            row.addView(card, lp);
                         }
-                        d.setMessage(b.toString());
                     }
                 });
             }
@@ -1364,7 +1503,13 @@ public class HomeActivity extends Activity {
                         if (isFinishing() || favRow == null) return;
                         apps.clear();
                         apps.addAll(found);
-                        if (!prefs.contains(KEY_FAVS)) firstFavs();
+                        // Right after the TV starts its list of apps can still be empty: wait for a real one
+                        // before choosing the first favourites, or the choice would be "none" for good.
+                        if (found.isEmpty()) {
+                            handler.postDelayed(new Runnable() { @Override public void run() { loadApps(); } }, 3000);
+                            return;
+                        }
+                        if (!prefs.contains(KEY_FAVS) || (favs.isEmpty() && !prefs.getBoolean("favs_touched", false))) firstFavs();
                         // SmartTube takes the first place the first time it shows up: it is the working YouTube.
                         if (installed(SMARTTUBE) && !prefs.getBoolean(KEY_SMARTTUBE, false)) {
                             favs.remove(SMARTTUBE);
@@ -1526,6 +1671,7 @@ public class HomeActivity extends Activity {
     }
 
     private void saveFavs() {
+        if (!apps.isEmpty()) prefs.edit().putBoolean("favs_touched", !favs.isEmpty() || prefs.getBoolean("favs_touched", false)).apply();
         prefs.edit().putString(KEY_FAVS, TextUtils.join("\n", favs))
                 .putString(KEY_HIDDEN, TextUtils.join("\n", hidden)).apply();
     }

@@ -199,7 +199,7 @@ public class LinkService extends Service {
         }
 
         if (path.equals("/api/info")) {
-            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.19\",\"inputs\":[");
+            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.20\",\"inputs\":[");
             int[] inputs = TvInput.inputs();
             for (int i = 0; i < inputs.length; i++) {
                 b.append(i > 0 ? "," : "").append("{\"i\":").append(inputs[i]).append(",\"name\":\"").append(esc(TvInput.name(this, inputs[i])))
@@ -233,6 +233,10 @@ public class LinkService extends Service {
                 home.runOnUiThread(new Runnable() { @Override public void run() { home.refreshWeather(true); } });
             }
             json(out, 200, found == null ? "City not found" : "Weather set to " + found);
+        } else if (path.equals("/api/screenshot")) {
+            byte[] jpeg = screenshot();
+            if (jpeg == null) json(out, 200, "Ghar Home is not on screen");
+            else reply(out, 200, "image/jpeg", jpeg);
         } else if (path.equals("/api/probe")) {
             reply(out, 200, "text/plain; charset=utf-8", Net.probe().getBytes("UTF-8"));
         } else if (path.equals("/api/link")) {
@@ -442,6 +446,33 @@ public class LinkService extends Service {
             if (best == null && (label.contains(q) || label.replace(" ", "").contains(squeezed))) best = app;
         }
         return best == null ? "No app called \"" + text.trim() + "\"" : open(best[0]);
+    }
+
+    /**
+     * What Ghar Home's own screen shows, as a JPEG. An app can only picture itself, so this is null while
+     * another app is in front, and popups (separate windows) are not in it.
+     */
+    private byte[] screenshot() {
+        final HomeActivity home = HomeActivity.showing;
+        if (home == null) return null;
+        final byte[][] out = new byte[1][];
+        final java.util.concurrent.CountDownLatch done = new java.util.concurrent.CountDownLatch(1);
+        home.runOnUiThread(new Runnable() {
+            @Override public void run() {
+                try {
+                    android.view.View v = home.getWindow().getDecorView();
+                    Bitmap b = Bitmap.createBitmap(v.getWidth(), v.getHeight(), Bitmap.Config.ARGB_8888);
+                    v.draw(new android.graphics.Canvas(b));
+                    ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+                    b.compress(Bitmap.CompressFormat.JPEG, 85, bytes);
+                    b.recycle();
+                    out[0] = bytes.toByteArray();
+                } catch (Throwable ignored) { }
+                done.countDown();
+            }
+        });
+        try { done.await(10, java.util.concurrent.TimeUnit.SECONDS); } catch (InterruptedException ignored) { }
+        return out[0];
     }
 
     /** A web link from the phone, opened on the TV. YouTube links go to SmartTube when it is installed. */

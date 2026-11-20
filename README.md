@@ -26,7 +26,8 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
 - **TV inputs** (experimental). On TVs with an MStar board, buttons for TV, HDMI 1-3 and AV.
 - **Favourites.** A row of large tiles for the apps you pick, in your order.
 - **All apps, most used first.** Apps you open often rise to the top.
-- **Wallpapers.** Seven hand-picked backgrounds, or a photo sent from your phone (*Options* in the footer).
+- **Wallpapers.** Seven hand-picked backgrounds, three lightly animated ones (stars, snow, fireflies), or a
+  photo sent from your phone (*Options* in the footer).
 - **English and Nepali.** The flag in the footer switches. Nepali is offered only on TVs that have a
   Devanagari font.
 - **Install an app from the phone.** Old TVs can't download from today's secure sites, so the phone remote
@@ -51,7 +52,8 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
 
 ## What you need
 
-- A TV or TV box with **Android 4.4 or newer**.
+- A TV or TV box with **Android 4.4 to 9**. It is made for budget TVs that no longer get updates. Newer
+  Android is not supported yet.
 - *Unknown sources* turned on in the TV's security settings.
 - A way to get the APK onto the TV once: a USB stick, or the TV's browser.
 

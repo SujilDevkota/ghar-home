@@ -15,6 +15,8 @@ final class WeatherArt extends View {
 
     private final Paint paint = new Paint(Paint.ANTI_ALIAS_FLAG);
     private String kind = "";
+    /** Draws the picture in the middle of the view (a forecast card), not toward the corner of the screen. */
+    boolean centered;
 
     WeatherArt(Context c) { super(c); }
 
@@ -54,6 +56,11 @@ final class WeatherArt extends View {
         float w = getWidth(), h = getHeight();
         if (kind.length() == 0 || w == 0) return;
         float x = w * 0.42f, y = h * 0.30f;
+        if (centered) {
+            x = w * 0.5f;
+            y = h * 0.42f;
+            h *= 0.85f;
+        }
         int white = 0x48FFFFFF, grey = 0x40AEBBD6;
         if (kind.equals("sun")) {
             sun(c, x, y, h);
