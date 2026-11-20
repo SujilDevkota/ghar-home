@@ -142,6 +142,7 @@ public class HomeActivity extends Activity {
     private AudioTrack tickSound, chimeSound;
     private FrameLayout root;
     private View loadingView;
+    private long loadingSince;
     private int shownTheme = -2;
     private long shownPhoto;
     private long weatherTried;
@@ -433,6 +434,7 @@ public class HomeActivity extends Activity {
         status.setPadding(side - u / 2, 2 * u, side, 0);
         status.setGravity(Gravity.CENTER_VERTICAL);
         status.setClipChildren(false);
+        status.setClipToPadding(false);
         try {
             for (final int input : TvInput.inputs()) {
                 TextView button = (TextView) pill(TvInput.name(this, input), new Runnable() {
@@ -443,12 +445,12 @@ public class HomeActivity extends Activity {
                 });
                 // A green dot marks an input with something plugged in and switched on, such as a set-top box.
                 if (TvInput.live(input)) {
-                    SpannableString label = new SpannableString(button.getText() + "  \u2022");
-                    int dot = label.length() - 1;
-                    label.setSpan(new ForegroundColorSpan(0xFF3DDC97), dot, dot + 1, 0);
-                    label.setSpan(new RelativeSizeSpan(1.3f), dot, dot + 1, 0);
-                    button.setText(label);
-                    button.setIncludeFontPadding(false);
+                    GradientDrawable dot = new GradientDrawable();
+                    dot.setShape(GradientDrawable.OVAL);
+                    dot.setColor(0xFF3DDC97);
+                    dot.setSize((int) (1.3f * u), (int) (1.3f * u));
+                    button.setCompoundDrawablesWithIntrinsicBounds(null, null, dot, null);
+                    button.setCompoundDrawablePadding((int) (1.2f * u));
                 }
                 status.addView(button);
             }
@@ -469,7 +471,7 @@ public class HomeActivity extends Activity {
             }
         });
         usbText.setTextColor(0xFF9FE8C0);
-        usbText.setCompoundDrawablesWithIntrinsicBounds(new Icon(Icon.USB, (int) (3.2f * u), 0xFF9FE8C0), null, null, null);
+        usbText.setCompoundDrawablesWithIntrinsicBounds(new Icon(Icon.USB, (int) (2.4f * u), 0xFF9FE8C0), null, null, null);
         usbText.setCompoundDrawablePadding(u);
         usbText.setVisibility(View.GONE);
         ((LinearLayout.LayoutParams) usbText.getLayoutParams()).rightMargin = 3 * u;
@@ -507,6 +509,7 @@ public class HomeActivity extends Activity {
         footer.setPadding(side - u / 2, 3 * u, side, 0);
         footer.setGravity(Gravity.CENTER_VERTICAL);
         footer.setClipChildren(false);
+        footer.setClipToPadding(false);
         footer.addView(pill("Remote", new Runnable() { @Override public void run() { showRemote(); } }));
         footer.addView(pill("Patro", new Runnable() { @Override public void run() { showPatro(); } }));
         footer.addView(pill("Wallpaper", new Runnable() { @Override public void run() { showWallpapers(); } }));
@@ -544,32 +547,11 @@ public class HomeActivity extends Activity {
         footer.addView(net, new LinearLayout.LayoutParams(0, -2, 1f));
         page.addView(footer);
 
-        // Loading: a ring that breathes, until the apps are on screen.
-        LinearLayout loading = new LinearLayout(this);
-        loading.setOrientation(LinearLayout.VERTICAL);
-        loading.setGravity(Gravity.CENTER);
-        loading.setBackgroundColor(0xFF0B1220);
-        View ring = new View(this);
-        GradientDrawable circle = new GradientDrawable();
-        circle.setShape(GradientDrawable.OVAL);
-        circle.setColor(0x00000000);
-        circle.setStroke(Math.max(3, u), 0xFF2F6BFF);
-        ring.setBackgroundDrawable(circle);
-        loading.addView(ring, new LinearLayout.LayoutParams(12 * u, 12 * u));
-        TextView name = text("Ghar Home", 3.2f, 0xCCFFFFFF);
-        name.setTypeface(Typeface.create("sans-serif-light", Typeface.NORMAL));
-        name.setPadding(0, 4 * u, 0, 0);
-        loading.addView(name);
-        ObjectAnimator pulse = ObjectAnimator.ofPropertyValuesHolder(ring,
-                PropertyValuesHolder.ofFloat("scaleX", 0.75f, 1.15f), PropertyValuesHolder.ofFloat("scaleY", 0.75f, 1.15f),
-                PropertyValuesHolder.ofFloat("alpha", 0.45f, 1f));
-        pulse.setDuration(700);
-        pulse.setRepeatMode(ValueAnimator.REVERSE);
-        pulse.setRepeatCount(ValueAnimator.INFINITE);
-        pulse.start();
-        loading.setTag(pulse);
+        // Loading: shown over everything until the apps are on screen.
+        LoadingView loading = new LoadingView(this, u);
         root.addView(loading, new FrameLayout.LayoutParams(-1, -1));
         loadingView = loading;
+        loadingSince = android.os.SystemClock.uptimeMillis();
 
         setContentView(root);
         updateClock();
@@ -814,9 +796,11 @@ public class HomeActivity extends Activity {
             final View loading = loadingView;
             loadingView = null;
             if (loading != null) {
-                loading.animate().alpha(0f).setDuration(350).setStartDelay(250).withEndAction(new Runnable() {
+                // On screen for at least a second and a bit, so it reads as an animation and not a flicker.
+                long onScreen = android.os.SystemClock.uptimeMillis() - loadingSince;
+                loading.animate().alpha(0f).setDuration(400).setStartDelay(Math.max(250, 1300 - onScreen)).withEndAction(new Runnable() {
                     @Override public void run() {
-                        ((ObjectAnimator) loading.getTag()).cancel();
+                        ((LoadingView) loading).stop();
                         root.removeView(loading);
                     }
                 }).start();
@@ -876,7 +860,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.11" : T.t("No internet") + "   \u2022   Ghar Home 0.11");
+        net.setText(online ? "Ghar Home 0.12" : T.t("No internet") + "   \u2022   Ghar Home 0.12");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
@@ -1060,6 +1044,10 @@ public class HomeActivity extends Activity {
         LinearLayout side = new LinearLayout(this);
         side.setOrientation(LinearLayout.VERTICAL);
         side.setPadding(4 * u, 0, 0, 0);
+        side.setClipChildren(false);
+        side.setClipToPadding(false);
+        box.setClipChildren(false);
+        box.setClipToPadding(false);
         side.addView(how);
         // The two switches that let the phone reach other apps. Both live in the TV's own settings.
         final AlertDialog[] dialog = new AlertDialog[1];
