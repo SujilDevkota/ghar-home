@@ -21,6 +21,7 @@ final class LoadingView extends View {
     private final ValueAnimator turn = ValueAnimator.ofFloat(0f, 1f);
     private final int u;
     private float t;
+    private RadialGradient glow;      // made once: a new one every frame would stutter
 
     LoadingView(Context c, int unit) {
         super(c);
@@ -51,7 +52,8 @@ final class LoadingView extends View {
 
         // The glow behind everything.
         p.setStyle(Paint.Style.FILL);
-        p.setShader(new RadialGradient(cx, cy, r * 3.2f, 0x332F6BFF, 0x002F6BFF, Shader.TileMode.CLAMP));
+        if (glow == null) glow = new RadialGradient(cx, cy, r * 3.2f, 0x332F6BFF, 0x002F6BFF, Shader.TileMode.CLAMP);
+        p.setShader(glow);
         c.drawCircle(cx, cy, r * 3.2f, p);
         p.setShader(null);
 

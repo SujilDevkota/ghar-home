@@ -140,6 +140,7 @@ public class HomeActivity extends Activity {
     private Icon volumeIcon;
     private ImageView bluetoothIcon, wiredIcon, wifiView;
     private Icon btIcon, wifiIcon;
+    private int statusTick;
     private TextView[] channelTiles;
     private final String[] liveVideo = new String[Channels.NAMES.length];   // the live stream of each channel, when it has one
     private long liveChecked;
@@ -264,6 +265,22 @@ public class HomeActivity extends Activity {
         try { unregisterReceiver(plugged); } catch (Exception ignored) { }
         try { if (tickSound != null) tickSound.release(); } catch (Exception ignored) { }
         try { if (chimeSound != null) chimeSound.release(); } catch (Exception ignored) { }
+    }
+
+    /** Another app is in front, or the TV is short of memory: give back what is cheap to make again. */
+    @Override public void onTrimMemory(int level) {
+        super.onTrimMemory(level);
+        if (level < TRIM_MEMORY_UI_HIDDEN) return;
+        try {
+            if (tickSound != null) { tickSound.release(); tickSound = null; }
+            if (chimeSound != null) { chimeSound.release(); chimeSound = null; }
+        } catch (Throwable ignored) { }
+        if (root != null && prefs.getInt(KEY_THEME, 0) != -1) {      // a theme is repainted in a moment; a photo is kept
+            root.setBackgroundDrawable(null);
+            root.setBackgroundColor(0xFF0B1220);
+            shownTheme = -2;
+        }
+        System.gc();
     }
 
     /** Home pressed while the home screen is already showing: back to the top. */
@@ -612,7 +629,10 @@ public class HomeActivity extends Activity {
         Drawable back = null;
         if (theme == -1) {
             try {
-                Bitmap b = BitmapFactory.decodeFile(photo.getPath());
+                BitmapFactory.Options small = new BitmapFactory.Options();
+                small.inSampleSize = 2;
+                small.inPreferredConfig = Bitmap.Config.RGB_565;
+                Bitmap b = BitmapFactory.decodeFile(photo.getPath(), small);
                 if (b != null) {
                     GradientDrawable veil = new GradientDrawable(GradientDrawable.Orientation.TOP_BOTTOM,
                             new int[] {0xA6000000, 0x73000000, 0xBF000000});
@@ -627,7 +647,20 @@ public class HomeActivity extends Activity {
             glow.setGradientType(GradientDrawable.RADIAL_GRADIENT);
             glow.setGradientRadius(screenW * 0.45f);
             glow.setGradientCenter(0.88f, 0.05f);
-            back = new LayerDrawable(new Drawable[] {sky, glow});
+            LayerDrawable painted = new LayerDrawable(new Drawable[] {sky, glow});
+            back = painted;
+            try {
+                DisplayMetrics dm = getResources().getDisplayMetrics();
+                int w = Math.max(dm.widthPixels, dm.heightPixels), h = Math.min(dm.widthPixels, dm.heightPixels);
+                Bitmap once = Bitmap.createBitmap(w / 4, h / 4, Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(once);
+                canvas.scale(0.25f, 0.25f);
+                painted.setBounds(0, 0, w, h);
+                painted.draw(canvas);
+                BitmapDrawable picture = new BitmapDrawable(getResources(), once);
+                picture.setFilterBitmap(true);
+                back = picture;
+            } catch (Throwable ignored) { }     // no memory for it: the gradients themselves are drawn
         }
         root.setBackgroundDrawable(back);
         shownTheme = theme;
@@ -732,7 +765,7 @@ public class HomeActivity extends Activity {
                 view.animate().scaleX(has ? zoom : 1f).scaleY(has ? zoom : 1f)
                         .translationY(has && zoom > 1.05f ? -0.6f * u : 0f)
                         .setInterpolator(has ? new OvershootInterpolator(2.5f) : new DecelerateInterpolator())
-                        .setDuration(has ? 220 : 140).start();
+                        .setDuration(has ? 220 : 140).withLayer().start();
                 if (has && view.getTag() instanceof AppItem) {
                     focusPkg = ((AppItem) view.getTag()).pkg;
                     focusInFavs = view.getParent() == favRow;
@@ -937,7 +970,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.17" : T.t("No internet") + "   \u2022   Ghar Home 0.17");
+        net.setText(online ? "Ghar Home 0.18" : T.t("No internet") + "   \u2022   Ghar Home 0.18");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
@@ -948,6 +981,11 @@ public class HomeActivity extends Activity {
     /** The volume, redrawn only when it has changed. Asked every second: this TV doesn't announce changes. */
     private void showVolume() {
         if (volumeText == null) return;
+        if (statusTick++ % 5 == 0) showPlugs();
+        showVolumeNumber();
+    }
+
+    private void showPlugs() {
         // Each icon shows only for what the TV has and can tell: nothing here is set by hand.
         // Wi-Fi: on TVs with Wi-Fi, plain when connected and crossed when not.
         try {
@@ -977,6 +1015,9 @@ public class HomeActivity extends Activity {
         boolean wired = false;
         try { wired = ((AudioManager) getSystemService(AUDIO_SERVICE)).isWiredHeadsetOn(); } catch (Throwable ignored) { }
         wiredIcon.setVisibility(wired ? View.VISIBLE : View.GONE);
+    }
+
+    private void showVolumeNumber() {
         try {
             AudioManager am = (AudioManager) getSystemService(AUDIO_SERVICE);
             int max = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC), now = am.getStreamVolume(AudioManager.STREAM_MUSIC);

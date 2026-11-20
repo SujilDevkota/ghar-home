@@ -209,6 +209,21 @@ final class TvInput {
         } catch (Throwable t) { b.append(cause(t)).append('\n'); }
         b.append("usb() = ").append(usb()).append('\n');
 
+        b.append("\n[memory]\n");
+        try {
+            android.app.ActivityManager am = (android.app.ActivityManager) c.getSystemService(Context.ACTIVITY_SERVICE);
+            android.app.ActivityManager.MemoryInfo mi = new android.app.ActivityManager.MemoryInfo();
+            am.getMemoryInfo(mi);
+            b.append("TV total ").append(mi.totalMem / 1048576).append(" MB, free ").append(mi.availMem / 1048576)
+                    .append(" MB, low = ").append(mi.lowMemory).append(", low line ").append(mi.threshold / 1048576).append(" MB\n");
+            b.append("app memory class ").append(am.getMemoryClass()).append(" MB\n");
+            android.os.Debug.MemoryInfo me = new android.os.Debug.MemoryInfo();
+            android.os.Debug.getMemoryInfo(me);
+            b.append("Ghar Home uses ").append(me.getTotalPss() / 1024).append(" MB (java ").append(me.dalvikPss / 1024)
+                    .append(", native ").append(me.nativePss / 1024).append(", other ").append(me.otherPss / 1024).append(")\n");
+            b.append("Ghar Home in front = ").append(HomeActivity.showing != null).append('\n');
+        } catch (Throwable t) { b.append(cause(t)).append('\n'); }
+
         b.append("\n[audio outputs]\n");
         try {
             AudioManager am = (AudioManager) c.getSystemService(Context.AUDIO_SERVICE);
