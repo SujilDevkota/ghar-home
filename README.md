@@ -10,6 +10,10 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
 
 *Ghar* (घर) means home.
 
+<img src="docs/tv-screenshot.jpg" width="880" alt="Ghar Home on a TV: the clock with the Nepali date, TV input buttons, weather, favourites and a row of Nepali TV channels">
+
+<sub>Ghar Home in Nepali on a WEGA TV running Android 4.4.4.</sub>
+
 ## What it does
 
 - **Clock and dates.** The time, the English date and the Bikram Sambat date, with the next Nepali festival.
