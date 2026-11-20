@@ -1,3 +1,5 @@
+<img src="logo.png" width="96" alt="">
+
 # Ghar Home
 
 A clean home screen for old Android TVs, with the Nepali date, festivals, weather and a phone remote.
@@ -15,7 +17,7 @@ one that is driven entirely by the TV remote. It needs no root and removes nothi
   and festivals marked.
   Open it from the date under the clock or from *Patro* in the footer.
 - **Weather.** Temperature and conditions for a city you choose (Kathmandu to start with), with a soft sun,
-  moon, cloud, rain or snow drawn behind it.
+  moon, cloud, rain or snow drawn behind it. OK on the weather shows the next five days.
 - **Volume, USB, Bluetooth.** The volume level, a USB button while a drive is plugged in, and icons for
   Wi-Fi (connected or not), Bluetooth (on or off) and a speaker or headphones on the audio socket, each
   shown only where the TV has it and can tell.

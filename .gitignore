@@ -9,4 +9,5 @@ out/
 # Local scratch
 share/
 preview.png
+!logo.png
 .DS_Store

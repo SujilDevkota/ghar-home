@@ -199,7 +199,7 @@ public class LinkService extends Service {
         }
 
         if (path.equals("/api/info")) {
-            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.18\",\"inputs\":[");
+            StringBuilder b = new StringBuilder("{\"name\":\"Ghar Home\",\"version\":\"0.19\",\"inputs\":[");
             int[] inputs = TvInput.inputs();
             for (int i = 0; i < inputs.length; i++) {
                 b.append(i > 0 ? "," : "").append("{\"i\":").append(inputs[i]).append(",\"name\":\"").append(esc(TvInput.name(this, inputs[i])))

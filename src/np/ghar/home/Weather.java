@@ -43,6 +43,29 @@ final class Weather {
         }
     }
 
+    /**
+     * The next five days for the saved place: {date "2026-11-21", words, highest, lowest} each, or null.
+     * Call off the main thread.
+     */
+    static String[][] forecast(SharedPreferences p) {
+        try {
+            String lat = p.getString("w_lat", "27.7172"), lon = p.getString("w_lon", "85.3240");
+            JSONObject daily = new JSONObject(get("http://api.open-meteo.com/v1/forecast?latitude=" + lat + "&longitude=" + lon
+                    + "&daily=weather_code,temperature_2m_max,temperature_2m_min&forecast_days=5&timezone=auto")).getJSONObject("daily");
+            JSONArray days = daily.getJSONArray("time"), codes = daily.getJSONArray("weather_code");
+            JSONArray high = daily.getJSONArray("temperature_2m_max"), low = daily.getJSONArray("temperature_2m_min");
+            String[][] out = new String[Math.min(5, days.length())][];
+            for (int i = 0; i < out.length; i++) {
+                String day = days.getString(i);
+                if (!day.matches("\\d{4}-\\d{2}-\\d{2}")) return null;
+                out[i] = new String[] {day, describe(codes.getInt(i), true), "" + Math.round(high.getDouble(i)), "" + Math.round(low.getDouble(i))};
+            }
+            return out;
+        } catch (Throwable t) {
+            return null;
+        }
+    }
+
     /** Looks a city up by name and saves it as the weather's place. Returns its full name, or null. */
     static String setCity(SharedPreferences p, String name) {
         try {

@@ -450,6 +450,13 @@ public class HomeActivity extends Activity {
         weatherSmall = text("", 2.4f, 0xCCFFFFFF);
         right.addView(weatherBig);
         right.addView(weatherSmall);
+        right.setFocusable(true);
+        right.setClickable(true);
+        right.setPadding(2 * u, u, 2 * u, u);
+        focusLook(right, 0x00FFFFFF, 2 * u, 1.0f);
+        right.setOnClickListener(new View.OnClickListener() {
+            @Override public void onClick(View v) { showForecast(); }
+        });
         header.addView(right);
         page.addView(header);
 
@@ -865,6 +872,20 @@ public class HomeActivity extends Activity {
             if (firstFav == null) firstFav = v;
             if (focusInFavs && a.pkg.equals(focusPkg)) wanted = v;
         }
+        if (Build.VERSION.SDK_INT < 26 && !installed(SMARTTUBE)) {
+            TextView get = text(T.t("Get YouTube (SmartTube)"), 2.4f, Color.WHITE);
+            get.setGravity(Gravity.CENTER);
+            get.setMaxLines(2);
+            get.setPadding(2 * u, 0, 2 * u, 0);
+            get.setFocusable(true);
+            get.setClickable(true);
+            focusLook(get, 0xFF7A1F2B, 2 * u, 1.06f);
+            get.setOnClickListener(new View.OnClickListener() {
+                @Override public void onClick(View v) { showGetSmartTube(); }
+            });
+            favRow.addView(get, new LinearLayout.LayoutParams(favW, favH));
+            if (firstFav == null) firstFav = get;
+        }
         if (firstFav == null) {
             TextView hint = text(T.t("Hold OK on an app below to add it here."), 2.4f, 0x99FFFFFF);
             hint.setPadding(0, 3 * u, 0, 3 * u);
@@ -970,7 +991,7 @@ public class HomeActivity extends Activity {
             NetworkInfo n = ((ConnectivityManager) getSystemService(CONNECTIVITY_SERVICE)).getActiveNetworkInfo();
             online = n != null && n.isConnected();
         } catch (Exception ignored) { }
-        net.setText(online ? "Ghar Home 0.18" : T.t("No internet") + "   \u2022   Ghar Home 0.18");
+        net.setText(online ? "Ghar Home 0.19" : T.t("No internet") + "   \u2022   Ghar Home 0.19");
         net.setTextColor(online ? 0x66FFFFFF : 0xFFFFB199);
         showWeather();
         showStatus();
@@ -1160,6 +1181,48 @@ public class HomeActivity extends Activity {
         art.setKind(prefs.getString("w_kind", ""));
         String words = prefs.getString("w_text", "");
         weatherSmall.setText(words.length() > 0 ? T.t(words) + "   \u2022   " + Weather.city(prefs) : Weather.city(prefs));
+    }
+
+    /** The next five days, from the same free service as the weather on the home screen. */
+    private void showForecast() {
+        final AlertDialog d = new AlertDialog.Builder(this).setTitle(Weather.city(prefs))
+                .setMessage("\u2026").setPositiveButton(T.t("Close"), null).show();
+        new Thread(new Runnable() {
+            @Override public void run() {
+                final String[][] days = Weather.forecast(prefs);
+                handler.post(new Runnable() {
+                    @Override public void run() {
+                        if (!d.isShowing()) return;
+                        if (days == null) {
+                            d.setMessage(T.t("The forecast could not be loaded."));
+                            return;
+                        }
+                        StringBuilder b = new StringBuilder();
+                        for (int i = 0; i < days.length; i++) {
+                            String[] ymd = days[i][0].split("-");
+                            long n = NepaliDate.dayNumber(Integer.parseInt(ymd[0]), Integer.parseInt(ymd[1]), Integer.parseInt(ymd[2]));
+                            String day = i == 0 ? T.t("Today") : T.ne ? NepaliDate.DAYS_NE[NepaliDate.weekday(n)] + "\u092C\u093E\u0930"
+                                    : new String[] {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"}[NepaliDate.weekday(n)];
+                            b.append(day).append(":   ").append(T.t(days[i][1])).append(",   ")
+                                    .append(T.num(days[i][2])).append("\u00B0 / ").append(T.num(days[i][3])).append("\u00B0");
+                            if (i < days.length - 1) b.append("\n\n");
+                        }
+                        d.setMessage(b.toString());
+                    }
+                });
+            }
+        }, "forecast").start();
+    }
+
+    /** Old TVs without a working YouTube: how to get SmartTube, which needs the phone to carry it over. */
+    private void showGetSmartTube() {
+        new AlertDialog.Builder(this).setTitle("SmartTube")
+                .setMessage(T.t("Google's YouTube app no longer works on old TVs. SmartTube is a free YouTube app that does.") + "\n\n"
+                        + T.t("Open the phone remote, choose \"Install an app on the TV\" and follow the steps there."))
+                .setPositiveButton(T.t("Phone remote"), new DialogInterface.OnClickListener() {
+                    @Override public void onClick(DialogInterface dialog, int which) { showRemote(); }
+                })
+                .setNegativeButton(T.t("Close"), null).show();
     }
 
     /** Asks for new weather when the saved one is over half an hour old (or now, after a change of city). */
